@@ -1,2 +1,9 @@
-browser: firefox
-server_url: http://localhost:4444
+# config file not required will fallback to defualt.
+
+# Supported browser: 'firefox' | 'chrome'
+# Default: 'firefox'
+browser: chrome
+
+# Url to geckodriver or chromedriver (web driver)
+# Default: "http://localhost:4444"
+server_url: http://localhost:9515
