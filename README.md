@@ -1,4 +1,5 @@
-# Web Automation Tool
+# ls_oxside
+![build](https://github.com/AG3NTSN0W/ls_oxide/actions/workflows/build.yml/badge.svg)
 
 Automate repetitive tasks on any website.
 
@@ -21,21 +22,20 @@ You can use Selenium (see instructions below) or you can use `chromedriver`/`gec
 
         geckodriver
 
-
-
-### Example (wiki):
+### Example:
 
 - using firefox `(default)` | `geckodriver`
 
     ```
-    cargo run -- -t ./examples/wiki.yml
+    ls_oxside -t ./examples/wiki.yml
     ```
 
 - using chrome | `chromedriver`
 
     ```
-    cargo run -- -t ./examples/wiki.yml -c ./examples/config.yml
+    ls_oxside -t ./examples/wiki.yml -c ./examples/config.yml
     ```
+
 
 ### Setting up Docker and Selenium
 
@@ -55,3 +55,18 @@ For more information on running selenium in docker, visit
 ## Run Tests:
 
     cargo test  
+
+### Example:
+
+- using firefox `(default)` | `geckodriver`
+
+    ```
+    cargo run -- -t ./examples/wiki.yml
+    ```
+
+- using chrome | `chromedriver`
+
+    ```
+    cargo run -- -t ./examples/wiki.yml -c ./examples/config.yml
+    ```        
+
