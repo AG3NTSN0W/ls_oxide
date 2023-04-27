@@ -1,10 +1,11 @@
 
-pub mod click;
-pub mod close;
-pub mod link;
-pub mod send_key;
-pub mod wait;
-pub mod screenshot;
+mod click;
+mod close;
+mod link;
+mod send_key;
+mod wait;
+mod screenshot;
+mod validate;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
 use serde::{Deserialize, Serialize};
@@ -49,6 +50,7 @@ pub enum TaskTypes {
     CLOSE,
     WAIT,
     SCREENSHOT,
+    VALIDATE,
     #[default]
     NONE,
 }
