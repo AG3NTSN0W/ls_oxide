@@ -4,6 +4,7 @@ pub mod close;
 pub mod link;
 pub mod send_key;
 pub mod wait;
+pub mod screenshot;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
 use serde::{Deserialize, Serialize};
@@ -16,6 +17,7 @@ use std::{fs, path::PathBuf};
 use self::click::Click;
 use self::close::Close;
 use self::link::Link;
+use self::screenshot::Screenshot;
 use self::send_key::SendKey;
 use self::wait::Wait;
 use async_trait::async_trait;
@@ -46,6 +48,7 @@ pub enum TaskTypes {
     LINK,
     CLOSE,
     WAIT,
+    SCREENSHOT,
     #[default]
     NONE,
 }
@@ -60,6 +63,7 @@ impl FromStr for TaskTypes {
             "link" => Ok(TaskTypes::LINK),
             "close" => Ok(TaskTypes::CLOSE),
             "wait" => Ok(TaskTypes::WAIT),
+            "screenshot" => Ok(TaskTypes::SCREENSHOT),
             _ => Err(TaskErr {
                 message: format!("Unknow Task Type: {:#?}", input),
                 task: None,
@@ -71,26 +75,10 @@ impl FromStr for TaskTypes {
 
 pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
     let mut tasks: Vec<Box<dyn Task>> = vec![];
-    let mut task_data = get_task_data(path)?;
-    for task in task_data.tasks.iter() {
-        let key = get_task_type(&task)?;
-        let task: Box<dyn Task> = match key {
-            TaskTypes::SENDKEY => Box::new(<SendKey as Task>::new(task)?),
-            TaskTypes::CLICK => Box::new(<Click as Task>::new(task)?),
-            TaskTypes::CLOSE => Box::new(<Close as Task>::new(task)?),
-            TaskTypes::LINK => Box::new(<Link as Task>::new(task)?),
-            TaskTypes::WAIT => Box::new(<Wait as Task>::new(task)?),
-            _ => {
-                return Err(TaskErr {
-                    message: format!("Invalid Task Type"),
-                    task: Some(task.clone()),
-                    task_type: Some(TaskTypes::NONE),
-                })
-            }
-        };
-        tasks.push(task);
+    let task_data = get_task_data(path)?;
+    for task_data in task_data.tasks.iter() {
+        tasks.push(data_to_task(&task_data)?);
     }
-
     validate_first_task(&task_data)?;
     if !is_last_task_close(&task_data)? {
         let mut close: HashMap<String, Value> = HashMap::new();
@@ -99,9 +87,29 @@ pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
             Value::String(String::from("closing web driver session")),
         );
         close.insert(String::from("close"), Value::Bool(true));
-        task_data.tasks.push(close);
+        tasks.push(data_to_task(&close)?);
     }
     Ok(tasks)
+}
+
+fn data_to_task(task_data: &HashMap<String, Value> ) -> TaskResult<Box<dyn Task>> {
+    let task_type = get_task_type(&task_data)?;
+    let task: Box<dyn Task> = match task_type {
+        TaskTypes::SENDKEY => Box::new(<SendKey as Task>::new(task_data)?),
+        TaskTypes::CLICK => Box::new(<Click as Task>::new(task_data)?),
+        TaskTypes::CLOSE => Box::new(<Close as Task>::new(task_data)?),
+        TaskTypes::LINK => Box::new(<Link as Task>::new(task_data)?),
+        TaskTypes::WAIT => Box::new(<Wait as Task>::new(task_data)?),
+        TaskTypes::SCREENSHOT => Box::new(<Screenshot as Task>::new(task_data)?),
+        _ => {
+            return Err(TaskErr {
+                message: format!("Invalid Task Type"),
+                task: Some(task_data.clone()),
+                task_type: Some(TaskTypes::NONE),
+            })
+        }
+    };
+    Ok(task)
 }
 
 fn get_task_data(path: PathBuf) -> TaskResult<TaskData> {

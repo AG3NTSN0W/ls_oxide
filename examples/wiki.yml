@@ -1,10 +1,9 @@
 ---
 meta_data: {}
 tasks:
-
   - name: "Open wikipedia"
     link:
-      url: "https://wikipedia.org"    
+      url: "https://wikipedia.org"
 
   - name: "enter rust in search"
     send_key:
@@ -15,19 +14,19 @@ tasks:
   - name: "Click save button"
     click:
       element:
-        xPath: '//*[@id="search-form"]/fieldset/button'      
+        xPath: '//*[@id="search-form"]/fieldset/button'
 
   - name: "search and press enter key"
     send_key:
       input: "Rust (programming language) \uE007"
       element:
-        id: "searchInput" 
+        id: "searchInput"
+
+  - name: "Take a screenshot"
+    screenshot: "/tmp/screenshot.png"
 
   - name: "wait 5 sec"
-    wait: 5000     
+    wait: 5000
 
-  - name: "closing web driver session"     
+  - name: "closing web driver session"
     close: True
-
-
-    
