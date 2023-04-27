@@ -26,7 +26,7 @@ use async_trait::async_trait;
 pub type Tasks = Vec<Box<dyn Task>>;
 pub type TaskResult<T> = std::result::Result<T, TaskErr>;
 
-const NAME: &'static str = "name";
+const NAME: &str = "name";
 
 #[async_trait]
 pub trait Task {
@@ -36,7 +36,7 @@ pub trait Task {
         Self: Sized;
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct TaskData {
     pub meta_data: HashMap<String, Value>,
     pub tasks: Vec<HashMap<String, Value>>,
@@ -79,7 +79,7 @@ pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
     let mut tasks: Vec<Box<dyn Task>> = vec![];
     let task_data = get_task_data(path)?;
     for task_data in task_data.tasks.iter() {
-        tasks.push(data_to_task(&task_data)?);
+        tasks.push(data_to_task(task_data)?);
     }
     validate_first_task(&task_data)?;
     if !is_last_task_close(&task_data)? {
@@ -95,7 +95,7 @@ pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
 }
 
 fn data_to_task(task_data: &HashMap<String, Value> ) -> TaskResult<Box<dyn Task>> {
-    let task_type = get_task_type(&task_data)?;
+    let task_type = get_task_type(task_data)?;
     let task: Box<dyn Task> = match task_type {
         TaskTypes::SENDKEY => Box::new(<SendKey as Task>::new(task_data)?),
         TaskTypes::CLICK => Box::new(<Click as Task>::new(task_data)?),
@@ -105,7 +105,7 @@ fn data_to_task(task_data: &HashMap<String, Value> ) -> TaskResult<Box<dyn Task>
         TaskTypes::SCREENSHOT => Box::new(<Screenshot as Task>::new(task_data)?),
         _ => {
             return Err(TaskErr {
-                message: format!("Invalid Task Type"),
+                message: "Invalid Task Type".to_string(),
                 task: Some(task_data.clone()),
                 task_type: Some(TaskTypes::NONE),
             })
@@ -141,7 +141,7 @@ fn get_task_type(task: &HashMap<String, Value>) -> TaskResult<TaskTypes> {
             .keys()
             .filter(|element| !element.contains(NAME))
             .collect::<Vec<&String>>()[0];
-        return match TaskTypes::from_str(&key) {
+        return match TaskTypes::from_str(key) {
             Ok(k) => Ok(k),
             Err(e) => return Err(TaskErr {
                 message: e.message,
@@ -159,9 +159,8 @@ fn get_task_type(task: &HashMap<String, Value>) -> TaskResult<TaskTypes> {
 
 fn validate_first_task(task_data: &TaskData) -> TaskResult<()> {
     let first_task = task_data.tasks.first();
-    if first_task.is_some() {
-        let key: Vec<&String> = first_task
-            .unwrap()
+    if let Some(first) = first_task {
+        let key: Vec<&String> = first
             .keys()
             .filter(|element| !element.contains(NAME))
             .collect::<Vec<&String>>();
@@ -173,7 +172,7 @@ fn validate_first_task(task_data: &TaskData) -> TaskResult<()> {
         //     ));
         // }
 
-        let key = TaskTypes::from_str(&key[0])?;
+        let key = TaskTypes::from_str(key[0])?;
         if key == TaskTypes::LINK {
             return Ok(());
         }
@@ -193,9 +192,8 @@ fn validate_first_task(task_data: &TaskData) -> TaskResult<()> {
 
 fn is_last_task_close(task_data: &TaskData) -> TaskResult<bool> {
     let last_task = task_data.tasks.last();
-    if last_task.is_some() {
-        let key: Vec<&String> = last_task
-            .unwrap()
+    if let Some(last) = last_task {
+        let key: Vec<&String> = last
             .keys()
             .filter(|element| !element.contains(NAME))
             .collect::<Vec<&String>>();
@@ -207,12 +205,12 @@ fn is_last_task_close(task_data: &TaskData) -> TaskResult<bool> {
         //     ));
         // }
 
-        let key = TaskTypes::from_str(&key[0])?;
+        let key = TaskTypes::from_str(key[0])?;
         if key == TaskTypes::CLOSE {
             return Ok(true);
         }
     }
-    return Ok(false);
+    Ok(false)
 }
 
 pub fn get_task<'a>(task: &'a HashMap<String, Value>, key: &str) -> TaskResult<&'a Mapping> {
@@ -329,7 +327,7 @@ mod tests {
     fn test_get_task_name_error() {
         let task: HashMap<String, Value> = HashMap::new();
 
-        let result = get_task_name(&task).map_err(|e| e);
+        let result = get_task_name(&task);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(task),
@@ -343,7 +341,7 @@ mod tests {
         let mut task: HashMap<String, Value> = HashMap::new();
         task.insert(String::from("name"), Value::from(""));
 
-        let result = get_task_name(&task).map_err(|e| e);
+        let result = get_task_name(&task);
         let expected = Err(TaskErr {
             message: String::from("Task name can`t be empty"),
             task: Some(task),
@@ -357,7 +355,7 @@ mod tests {
         let mut task: HashMap<String, Value> = HashMap::new();
         task.insert(String::from("name"), Value::from(0));
 
-        let result = get_task_name(&task).map_err(|e| e);
+        let result = get_task_name(&task);
         let expected = Err(TaskErr {
             message: String::from("Task name is not a string"),
             task: Some(task),
@@ -371,7 +369,7 @@ mod tests {
         let mut task: HashMap<String, Value> = HashMap::new();
         task.insert(String::from("name"), Value::from(0));
 
-        let result = get_task(&task, "").map_err(|e| e);
+        let result = get_task(&task, "");
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(task.clone()),
@@ -386,7 +384,7 @@ mod tests {
         task.insert(String::from("name"), Value::from("foo"));
         task.insert(String::from("send_key"), Value::from(""));
 
-        let result = get_task(&task, "send_key").map_err(|e| e);
+        let result = get_task(&task, "send_key");
         let expected = Err(TaskErr {
             message: String::from("Task data is Malformed"),
             task: Some(task.clone()),
@@ -401,7 +399,7 @@ mod tests {
         task.insert(String::from("name"), Value::from("foo"));
         task.insert(String::from("send_key"), Value::from(Mapping::new()));
 
-        let result = get_task(&task, "send_key").map_err(|e| e);
+        let result = get_task(&task, "send_key");
         let expected = Err(TaskErr {
             message: String::from("Task data is empty"),
             task: Some(task.clone()),
@@ -513,7 +511,7 @@ tasks:
                 ";
 
         let task: TaskData = serde_yaml::from_str(yaml).unwrap();
-        let result = validate_first_task(&task).map_err(|e| e);
+        let result = validate_first_task(&task);
         let expected = Err(TaskErr {
             message: String::from("First Task should be a Link"),
             task: None,
@@ -548,7 +546,7 @@ tasks:
         task.insert(String::from("name"), Value::from("foo"));
         task.insert(String::from("foo"), Value::from(Mapping::new()));
 
-        let result = get_task_type(&task).map_err(|e| e);
+        let result = get_task_type(&task);
         let expected = Err(TaskErr {
             message: String::from("Unknow Task Type: \"foo\""),
             task: Some(task.clone()),
@@ -562,7 +560,7 @@ tasks:
         let mut task: HashMap<String, Value> = HashMap::new();
         task.insert(String::from("name"), Value::from("foo"));
 
-        let result = get_task_type(&task).map_err(|e| e);
+        let result = get_task_type(&task);
         let expected = Err(TaskErr {
             message: String::from("Task data is Malformed"),
             task: Some(task.clone()),

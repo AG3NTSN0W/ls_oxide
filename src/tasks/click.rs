@@ -10,7 +10,7 @@ use crate::{
     executor::{ExecuteResult, WebDriverSession},
 };
 
-const TASK_TYPE: &'static str = "click";
+const TASK_TYPE: &str = "click";
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Click {
@@ -22,10 +22,10 @@ pub struct Click {
 #[async_trait]
 impl Task for Click {
     fn new(task: &HashMap<String, Value>) -> TaskResult<Click> {
-        let name = get_task_name(&task)?;
-        let click = get_task(&task, TASK_TYPE)?;
+        let name = get_task_name(task)?;
+        let click = get_task(task, TASK_TYPE)?;
 
-        let element = match Element::new(&click) {
+        let element = match Element::new(click) {
             Ok(element) => element,
             Err(err) => {
                 return Err(TaskErr {
@@ -58,7 +58,7 @@ impl Task for Click {
                 return Err((
                     web_driver_session,
                     TaskErr {
-                        message: format!("{}", e.to_string()),
+                        message: format!("{}", e),
                         task: None,
                         task_type: Some(TaskTypes::CLICK),
                     },
@@ -82,7 +82,7 @@ impl Task for Click {
                 return Err((
                     web_driver_session,
                     TaskErr {
-                        message: format!("{}", e.to_string()),
+                        message: format!("{}", e),
                         task: None,
                         task_type: Some(TaskTypes::CLICK),
                     },
@@ -101,7 +101,7 @@ mod tests {
     #[test]
     fn test_empty_task() {
         let click_map_empty = HashMap::new();
-        let result = Click::new(&click_map_empty).map_err(|e| e);
+        let result = Click::new(&click_map_empty);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(click_map_empty),
@@ -118,7 +118,7 @@ mod tests {
               ";
 
         let click = serde_yaml::from_str(yaml).unwrap();
-        let result = Click::new(&click).map_err(|e| e);
+        let result = Click::new(&click);
         let expected = Err(TaskErr {
             message: String::from("Task data is Malformed"),
             task: Some(click),
@@ -134,7 +134,7 @@ mod tests {
               ";
 
         let click = serde_yaml::from_str(yaml).unwrap();
-        let result = Click::new(&click).map_err(|e| e);
+        let result = Click::new(&click);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(click),
@@ -154,7 +154,7 @@ mod tests {
 
         let click = serde_yaml::from_str(yaml).unwrap();
 
-        let result = Click::new(&click).map_err(|e| e);
+        let result = Click::new(&click);
         let expected = Err(TaskErr {
             message: String::from("Task name can`t be empty"),
             task: Some(click),
@@ -174,7 +174,7 @@ mod tests {
 
         let click = serde_yaml::from_str(yaml).unwrap();
 
-        let result = Click::new(&click).map_err(|e| e);
+        let result = Click::new(&click);
         let expected = Err(TaskErr {
             message: String::from("Task name is not a string"),
             task: Some(click),
@@ -194,7 +194,7 @@ mod tests {
 
         let click = serde_yaml::from_str(yaml).unwrap();
 
-        let result = Click::new(&click).map_err(|e| e);
+        let result = Click::new(&click);
         let expected = Err(TaskErr {
             message: String::from("Unknow Element Type: \"foo\""),
             task: Some(click),
@@ -213,7 +213,7 @@ mod tests {
               ";
 
         let click = serde_yaml::from_str(yaml).unwrap();
-        let result = Click::new(&click).map_err(|e| e);
+        let result = Click::new(&click);
         let expected = Err(TaskErr {
             message: String::from("Element: Value is not a string"),
             task: Some(click),
@@ -231,7 +231,7 @@ mod tests {
               ";
 
         let click = serde_yaml::from_str(yaml).unwrap();
-        let result = Click::new(&click).map_err(|e| e);
+        let result = Click::new(&click);
         let expected = Err(TaskErr {
             message: String::from("No element found"),
             task: Some(click),

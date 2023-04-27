@@ -11,7 +11,7 @@ use crate::{
 
 use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
 
-const TASK_TYPE: &'static str = "validate";
+const TASK_TYPE: &str = "validate";
 #[derive(PartialEq, Eq, Debug)]
 pub enum ValidateTypes {
     Text(String),
@@ -32,10 +32,10 @@ pub struct Validate {
 #[async_trait]
 impl Task for Validate {
     fn new(task: &HashMap<String, Value>) -> TaskResult<Validate> {
-        let name = get_task_name(&task)?;
-        let validate = get_task(&task, TASK_TYPE)?;
+        let name = get_task_name(task)?;
+        let validate = get_task(task, TASK_TYPE)?;
 
-        let element = match Element::new(&validate) {
+        let element = match Element::new(validate) {
             Ok(element) => element,
             Err(err) => {
                 return Err(TaskErr {
@@ -46,7 +46,7 @@ impl Task for Validate {
             }
         };
 
-        let expect = get_expect(&task)?;
+        let expect = get_expect(task)?;
 
         Ok(Validate {
             _task_types: TaskTypes::VALIDATE,
@@ -102,29 +102,29 @@ fn get_expect(task: &HashMap<String, Value>) -> TaskResult<Vec<ValidateTypes>> {
         });
     }
 
-    Ok(validate_task(&task_mapping)?)
+    validate_task(task_mapping)
 }
 
 fn validate_task(task_mapping: &Mapping) -> TaskResult<Vec<ValidateTypes>> {
     let mut to_validate: Vec<ValidateTypes> = Vec::new();
 
-    if let Some(v) = validate_text_data(&task_mapping) {
+    if let Some(v) = validate_text_data(task_mapping) {
         to_validate.push(v);
     }
 
-    if let Some(v) = validate_value_data(&task_mapping) {
+    if let Some(v) = validate_value_data(task_mapping) {
         to_validate.push(v);
     }
 
-    if let Some(v) = validate_inner_html_data(&task_mapping) {
+    if let Some(v) = validate_inner_html_data(task_mapping) {
         to_validate.push(v);
     }
 
-    if let Some(v) = validate_css_data(&task_mapping) {
+    if let Some(v) = validate_css_data(task_mapping) {
         to_validate.push(v);
     }
 
-    if let Some(v) = validate_property_data(&task_mapping) {
+    if let Some(v) = validate_property_data(task_mapping) {
         to_validate.push(v);
     }
 
@@ -196,7 +196,7 @@ fn validate_property_data(task_mapping: &Mapping) -> Option<ValidateTypes> {
 fn to_hash(task_data: &Mapping) -> HashMap<String, String> {
     let mut task_hash: HashMap<String, String> = HashMap::new();
 
-    for (key, value) in &*task_data {
+    for (key, value) in task_data {
         let key = match key.as_str() {
             None => continue,
             Some(k) => k.to_owned(),
@@ -210,19 +210,19 @@ fn to_hash(task_data: &Mapping) -> HashMap<String, String> {
         task_hash.insert(key, value);
     }
 
-    return task_hash;
+    task_hash
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::element::ElementType;
+    
 
     use super::*;
 
     #[test]
     fn test_empty_task() {
         let click_map_empty = HashMap::new();
-        let result = Validate::new(&click_map_empty).map_err(|e| e);
+        let result = Validate::new(&click_map_empty);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(click_map_empty),

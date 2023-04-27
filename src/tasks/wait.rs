@@ -9,7 +9,7 @@ use crate::executor::{ExecuteResult, WebDriverSession};
 use super::{get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
 use tokio::time::{sleep, Duration};
 
-const TASK_TYPE: &'static str = "wait";
+const TASK_TYPE: &str = "wait";
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Wait {
@@ -21,8 +21,8 @@ pub struct Wait {
 #[async_trait]
 impl Task for Wait {
     fn new(task: &HashMap<String, Value>) -> TaskResult<Wait> {
-        let name = get_task_name(&task)?;
-        let duration_ms = get_duration_ms(&task)?;
+        let name = get_task_name(task)?;
+        let duration_ms = get_duration_ms(task)?;
 
         Ok(Wait {
             _task_types: TaskTypes::WAIT,
@@ -53,7 +53,7 @@ fn get_duration_ms(task: &HashMap<String, Value>) -> TaskResult<Duration> {
         Some(duration_ms) => duration_ms,
         None => {
             return Err(TaskErr {
-                message: format!("wait field not found"),
+                message: "wait field not found".to_string(),
                 task: Some(task.clone()),
                 task_type: Some(TaskTypes::WAIT),
             });
@@ -64,7 +64,7 @@ fn get_duration_ms(task: &HashMap<String, Value>) -> TaskResult<Duration> {
         None => {
             // return Err(format!("send_key: input is not a string:\n{:#?}", task));
             return Err(TaskErr {
-                message: format!("Wait field is not a number"),
+                message: "Wait field is not a number".to_string(),
                 task: Some(task.clone()),
                 task_type: Some(TaskTypes::WAIT),
             });
@@ -81,7 +81,7 @@ mod tests {
     #[test]
     fn test_empty_task() {
         let wait = HashMap::new();
-        let result = Wait::new(&wait).map_err(|e| e);
+        let result = Wait::new(&wait);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(wait),
@@ -97,7 +97,7 @@ mod tests {
               ";
 
         let wait = serde_yaml::from_str(yaml).unwrap();
-        let result = Wait::new(&wait).map_err(|e| e);
+        let result = Wait::new(&wait);
         let expected = Err(TaskErr {
             message: String::from("wait field not found"),
             task: Some(wait),
@@ -114,7 +114,7 @@ mod tests {
               ";
         let wait = serde_yaml::from_str(yaml).unwrap();
 
-        let result = Wait::new(&wait).map_err(|e| e);
+        let result = Wait::new(&wait);
         let expected = Err(TaskErr {
             message: String::from("Task name can`t be empty"),
             task: Some(wait),

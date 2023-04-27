@@ -122,7 +122,7 @@ impl WebDriverConfig {
     fn get_google_capabilities() -> ChromeCapabilities {
         let mut capabilities = DesiredCapabilities::chrome();
         capabilities.add_chrome_arg("--enable-automation").unwrap();
-        return capabilities;
+        capabilities
     }
 
     fn get_config(config_path: &Option<PathBuf>) -> Result<DriverConfig, String> {

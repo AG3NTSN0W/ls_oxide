@@ -9,7 +9,7 @@ use super::{
     get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes,
 };
 
-const TASK_TYPE: &'static str = "send_key";
+const TASK_TYPE: &str = "send_key";
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct SendKey {
@@ -22,11 +22,11 @@ pub struct SendKey {
 #[async_trait]
 impl Task for SendKey {
     fn new(task: &HashMap<String, Value>) -> TaskResult<SendKey> {
-        let name = get_task_name(&task)?;
-        let send_key = get_task(&task, TASK_TYPE)?;
-        let input = get_input(&task)?;
+        let name = get_task_name(task)?;
+        let send_key = get_task(task, TASK_TYPE)?;
+        let input = get_input(task)?;
 
-        let element = match Element::new(&send_key) {
+        let element = match Element::new(send_key) {
             Ok(element) => element,
             Err(e) => {
                 return Err(TaskErr {
@@ -101,13 +101,13 @@ impl Task for SendKey {
 }
 
 fn get_input(task: &HashMap<String, Value>) -> TaskResult<String> {
-    let link = get_task(&task, TASK_TYPE)?;
+    let link = get_task(task, TASK_TYPE)?;
     let input = match link.get("input") {
         Some(input) => input,
         None => {
             // return Err(format!("send_key: Task is malformed:"));
             return Err(TaskErr {
-                message: format!("input field not found"),
+                message: "input field not found".to_string(),
                 task: Some(task.clone()),
                 task_type: Some(TaskTypes::SENDKEY),
             });
@@ -118,7 +118,7 @@ fn get_input(task: &HashMap<String, Value>) -> TaskResult<String> {
         None => {
             // return Err(format!("send_key: input is not a string:\n{:#?}", task));
             return Err(TaskErr {
-                message: format!("input is not a string"),
+                message: "input is not a string".to_string(),
                 task: Some(task.clone()),
                 task_type: Some(TaskTypes::SENDKEY),
             });
@@ -128,7 +128,7 @@ fn get_input(task: &HashMap<String, Value>) -> TaskResult<String> {
     if input.is_empty() {
         // return Err(format!("send_key: input is empty:\n{:#?}", task));
         return Err(TaskErr {
-            message: format!("input is empty"),
+            message: "input is empty".to_string(),
             task: Some(task.clone()),
             task_type: Some(TaskTypes::SENDKEY),
         });
@@ -146,7 +146,7 @@ mod tests {
     #[test]
     fn test_empty_task() {
         let send_key_task = HashMap::new();
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(send_key_task),
@@ -163,7 +163,7 @@ mod tests {
               ";
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("Task data is Malformed"),
             task: Some(send_key_task),
@@ -179,7 +179,7 @@ mod tests {
               ";
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(send_key_task),
@@ -200,7 +200,7 @@ mod tests {
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
 
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("Task name can`t be empty"),
             task: Some(send_key_task),
@@ -221,7 +221,7 @@ mod tests {
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
 
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("Task name is not a string"),
             task: Some(send_key_task),
@@ -242,7 +242,7 @@ mod tests {
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
 
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("Unknow Element Type: \"foo\""),
             task: Some(send_key_task),
@@ -262,7 +262,7 @@ mod tests {
               ";
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("Element: Value is not a string"),
             task: Some(send_key_task),
@@ -282,7 +282,7 @@ mod tests {
               ";
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("input is not a string"),
             task: Some(send_key_task),
@@ -301,7 +301,7 @@ mod tests {
               ";
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("input field not found"),
             task: Some(send_key_task),
@@ -319,7 +319,7 @@ mod tests {
               ";
 
         let send_key_task = serde_yaml::from_str(yaml).unwrap();
-        let result = SendKey::new(&send_key_task).map_err(|e| e);
+        let result = SendKey::new(&send_key_task);
         let expected = Err(TaskErr {
             message: String::from("No element found"),
             task: Some(send_key_task),

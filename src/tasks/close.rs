@@ -6,7 +6,7 @@ use std::time::Instant;
 use crate::executor::{ExecuteResult, WebDriverSession};
 
 use super::{get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
-const TASK_TYPE: &'static str = "close";
+const TASK_TYPE: &str = "close";
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Close {
@@ -17,7 +17,7 @@ pub struct Close {
 #[async_trait]
 impl Task for Close {
     fn new(task: &HashMap<String, Value>) -> TaskResult<Close> {
-        let name = get_task_name(&task)?;
+        let name = get_task_name(task)?;
         if !task.contains_key(TASK_TYPE) {
             return Err(TaskErr {
                 message: String::from("Malformed Task"),
@@ -56,7 +56,7 @@ impl Task for Close {
             Err(e) => Err((
                 web_driver_session,
                 TaskErr {
-                    message: format!("Unable to close webdriver: {}", e.to_string()),
+                    message: format!("Unable to close webdriver: {}", e),
                     task: None,
                     task_type: Some(TaskTypes::CLOSE),
                 },
@@ -72,7 +72,7 @@ mod tests {
     #[test]
     fn test_empty_task() {
         let close = HashMap::new();
-        let result = Close::new(&close).map_err(|e| e);
+        let result = Close::new(&close);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(close),
@@ -88,7 +88,7 @@ mod tests {
               ";
 
         let close = serde_yaml::from_str(yaml).unwrap();
-        let result = Close::new(&close).map_err(|e| e);
+        let result = Close::new(&close);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(close),
@@ -105,7 +105,7 @@ mod tests {
               ";
         let close = serde_yaml::from_str(yaml).unwrap();
 
-        let result = Close::new(&close).map_err(|e| e);
+        let result = Close::new(&close);
         let expected = Err(TaskErr {
             message: String::from("Task name can`t be empty"),
             task: Some(close),

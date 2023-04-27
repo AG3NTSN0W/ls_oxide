@@ -44,38 +44,38 @@ impl Element {
             });
         }
 
-        Err(format!("Multiple elements are not supported"))
+        Err("Multiple elements are not supported".to_string())
     }
 
     fn get_element(task: &Mapping) -> Result<Mapping, String> {
         let elemnet = match task.get("element") {
             Some(x) => x.as_mapping(),
-            None => return Err(format!("No element found")),
+            None => return Err("No element found".to_string()),
         };
 
         match elemnet {
             Some(e) => Ok(e.to_owned()),
-            None => Err(format!("Invalid element structure")),
+            None => Err("Invalid element structure".to_string()),
         }
     }
 
     fn get_element_value(element: ElementValue) -> Result<ElementStr, String> {
         let element_value = match element.1.as_str() {
             Some(v) => v,
-            None => return Err(format!("Element: Value is not a string")),
+            None => return Err("Element: Value is not a string".to_string()),
         };
 
         if element_value.is_empty() {
-            return Err(format!("Element: Value can`t be empty"));
+            return Err("Element: Value can`t be empty".to_string());
         }
 
         let element_key = match element.0.as_str() {
             Some(v) => v,
-            None => return Err(format!("Element: Key is not a string")),
+            None => return Err("Element: Key is not a string".to_string()),
         };
 
         if element_key.is_empty() {
-            return Err(format!("Element: Key can`t be empty"));
+            return Err("Element: Key can`t be empty".to_string());
         }
         Ok((element_key, element_value))
     }
@@ -109,7 +109,7 @@ mod tests {
             Value::from(element_value),
         );
 
-        let result = Element::new(&element).map_err(|e| e);
+        let result = Element::new(&element);
         let expected = Err(String::from("Unknow Element Type: \"foo\""));
 
         assert_eq!(expected, result)
@@ -126,7 +126,7 @@ mod tests {
             Value::from(element_value),
         );
 
-        let result = Element::new(&element).map_err(|e| e);
+        let result = Element::new(&element);
         let expected = Err(String::from("Element: Value can`t be empty"));
 
         assert_eq!(expected, result)
@@ -140,7 +140,7 @@ mod tests {
         let mut element: Mapping = Mapping::new();
         element.insert(Value::from("element"), Value::from(element_value));
 
-        let result = Element::new(&element).map_err(|e| e);
+        let result = Element::new(&element);
         let expected = Err(String::from("Element: Value is not a string"));
 
         assert_eq!(expected, result)
@@ -157,7 +157,7 @@ mod tests {
         let mut element: Mapping = Mapping::new();
         element.insert(Value::from("element"), Value::from(element_value));
 
-        let result = Element::new(&element).map_err(|e| e);
+        let result = Element::new(&element);
         let expected = Err(String::from("Element: Key can`t be empty"));
 
         assert_eq!(expected, result)
@@ -177,7 +177,7 @@ mod tests {
             Value::from(element_value),
         );
 
-        let result = Element::new(&element).map_err(|e| e);
+        let result = Element::new(&element);
         let expected = Err(String::from("Element: Key is not a string"));
 
         assert_eq!(expected, result)
@@ -197,7 +197,7 @@ mod tests {
             Value::from(element_value),
         );
 
-        let result = Element::new(&element).map_err(|e| e);
+        let result = Element::new(&element);
         let expected = Ok(Element {
             element_type: ElementType::XPATH,
             value: "//*[@id=\"search-form\"]/fieldset/button".to_owned(),

@@ -8,7 +8,7 @@ use crate::executor::{ExecuteResult, WebDriverSession};
 
 use super::{get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
 
-const TASK_TYPE: &'static str = "screenshot";
+const TASK_TYPE: &str = "screenshot";
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Screenshot {
@@ -20,8 +20,8 @@ pub struct Screenshot {
 #[async_trait]
 impl Task for Screenshot {
     fn new(task: &HashMap<String, Value>) -> TaskResult<Screenshot> {
-        let name = get_task_name(&task)?;
-        let path = get_path(&task)?;
+        let name = get_task_name(task)?;
+        let path = get_path(task)?;
 
         Ok(Screenshot {
             _task_types: TaskTypes::SCREENSHOT,
@@ -67,7 +67,7 @@ fn get_path(task: &HashMap<String, Value>) -> TaskResult<String> {
         Some(screenshot_path) => screenshot_path,
         None => {
             return Err(TaskErr {
-                message: format!("screenshot field not found"),
+                message: "screenshot field not found".to_string(),
                 task: Some(task.clone()),
                 task_type: Some(TaskTypes::SCREENSHOT),
             });
@@ -78,7 +78,7 @@ fn get_path(task: &HashMap<String, Value>) -> TaskResult<String> {
         None => {
             // return Err(format!("send_key: input is not a string:\n{:#?}", task));
             return Err(TaskErr {
-                message: format!("screenshot field is not a string"),
+                message: "screenshot field is not a string".to_string(),
                 task: Some(task.clone()),
                 task_type: Some(TaskTypes::SCREENSHOT),
             });
@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn test_empty_task() {
         let screenshot = HashMap::new();
-        let result = Screenshot::new(&screenshot).map_err(|e| e);
+        let result = Screenshot::new(&screenshot);
         let expected = Err(TaskErr {
             message: String::from("Malformed Task"),
             task: Some(screenshot),
@@ -111,7 +111,7 @@ mod tests {
               ";
 
         let screenshot = serde_yaml::from_str(yaml).unwrap();
-        let result = Screenshot::new(&screenshot).map_err(|e| e);
+        let result = Screenshot::new(&screenshot);
         let expected = Err(TaskErr {
             message: String::from("screenshot field not found"),
             task: Some(screenshot),
@@ -128,7 +128,7 @@ mod tests {
               ";
         let screenshot = serde_yaml::from_str(yaml).unwrap();
 
-        let result = Screenshot::new(&screenshot).map_err(|e| e);
+        let result = Screenshot::new(&screenshot);
         let expected = Err(TaskErr {
             message: String::from("Task name can`t be empty"),
             task: Some(screenshot),
