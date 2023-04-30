@@ -81,6 +81,7 @@ impl Task for SendKey {
                     name,
                     task_type: TaskTypes::SENDKEY,
                     duration: start.elapsed().as_secs(),
+                    result: None
                 },
             )),
             Err(_) => {

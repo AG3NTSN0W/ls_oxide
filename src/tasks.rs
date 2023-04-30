@@ -1,11 +1,10 @@
-
 mod click;
 mod close;
 mod link;
-mod send_key;
-mod wait;
 mod screenshot;
+mod send_key;
 mod validate;
+mod wait;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
 use serde::{Deserialize, Serialize};
@@ -20,6 +19,7 @@ use self::close::Close;
 use self::link::Link;
 use self::screenshot::Screenshot;
 use self::send_key::SendKey;
+use self::validate::Validate;
 use self::wait::Wait;
 use async_trait::async_trait;
 
@@ -66,6 +66,7 @@ impl FromStr for TaskTypes {
             "close" => Ok(TaskTypes::CLOSE),
             "wait" => Ok(TaskTypes::WAIT),
             "screenshot" => Ok(TaskTypes::SCREENSHOT),
+            "validate" => Ok(TaskTypes::VALIDATE),
             _ => Err(TaskErr {
                 message: format!("Unknow Task Type: {:#?}", input),
                 task: None,
@@ -73,6 +74,19 @@ impl FromStr for TaskTypes {
             }),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum ValidationReultType {
+    SUCCESS,
+    FAILED,
+}
+
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+struct ValidationReult {
+    validation: ValidationReultType,
+    message: String,
 }
 
 pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
@@ -94,7 +108,7 @@ pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
     Ok(tasks)
 }
 
-fn data_to_task(task_data: &HashMap<String, Value> ) -> TaskResult<Box<dyn Task>> {
+fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>> {
     let task_type = get_task_type(task_data)?;
     let task: Box<dyn Task> = match task_type {
         TaskTypes::SENDKEY => Box::new(<SendKey as Task>::new(task_data)?),
@@ -103,6 +117,7 @@ fn data_to_task(task_data: &HashMap<String, Value> ) -> TaskResult<Box<dyn Task>
         TaskTypes::LINK => Box::new(<Link as Task>::new(task_data)?),
         TaskTypes::WAIT => Box::new(<Wait as Task>::new(task_data)?),
         TaskTypes::SCREENSHOT => Box::new(<Screenshot as Task>::new(task_data)?),
+        TaskTypes::VALIDATE => Box::new(<Validate as Task>::new(task_data)?),
         _ => {
             return Err(TaskErr {
                 message: "Invalid Task Type".to_string(),
@@ -143,12 +158,14 @@ fn get_task_type(task: &HashMap<String, Value>) -> TaskResult<TaskTypes> {
             .collect::<Vec<&String>>()[0];
         return match TaskTypes::from_str(key) {
             Ok(k) => Ok(k),
-            Err(e) => return Err(TaskErr {
-                message: e.message,
-                task: Some(task.clone()),
-                task_type: None,
-            })
-        }
+            Err(e) => {
+                return Err(TaskErr {
+                    message: e.message,
+                    task: Some(task.clone()),
+                    task_type: None,
+                })
+            }
+        };
     }
     Err(TaskErr {
         message: String::from("Task data is Malformed"),
@@ -286,14 +303,15 @@ pub struct TaskOk {
     name: String,
     task_type: TaskTypes,
     duration: u64,
+    result: Option<Vec<ValidationReult>>,
 }
 
 impl fmt::Display for TaskOk {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{:?}: {} [{:#?}s]",
-            self.task_type, self.name, self.duration
+            "{:?}: {} [{:#?}s]\n{:#?}",
+            self.task_type, self.name, self.duration, self.result
         )
     }
 }

@@ -47,6 +47,7 @@ impl Task for Link {
                     name,
                     task_type: TaskTypes::LINK,
                     duration: start.elapsed().as_secs(),
+                    result: None
                 },
             )),
             Err(_) => {

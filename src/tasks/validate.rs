@@ -10,7 +10,7 @@ use crate::{
     executor::{ExecuteResult, WebDriverSession},
 };
 
-use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
+use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes, ValidationReult, ValidationReultType};
 
 const TASK_TYPE: &str = "validate";
 #[derive(PartialEq, Eq, Debug)]
@@ -19,16 +19,6 @@ pub enum ValidateTypes {
     InnerHtml(String),
     Css(HashMap<String, String>),
     Property(HashMap<String, String>),
-}
-
-pub enum ValidationReultType {
-    SUCCESS,
-    FAILED,
-}
-
-struct ValidationReult {
-    validation: ValidationReultType,
-    message: String,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -87,13 +77,13 @@ impl Task for Validate {
             }
         };
 
-        let _results = match validate(&self.expects, web_element).await {
+        let results = match validate(&self.expects, web_element).await {
             Ok(r) => r,
             Err(e) => {
                 return Err((
                     web_driver_session,
                     TaskErr {
-                        message: format!("{}", e),
+                        message: e,
                         task: None,
                         task_type: Some(TaskTypes::VALIDATE),
                     },
@@ -108,6 +98,7 @@ impl Task for Validate {
                 name,
                 task_type: TaskTypes::VALIDATE,
                 duration: start.elapsed().as_secs(),
+                result: Some(results)
             },
         ));
     }
@@ -128,7 +119,9 @@ async fn validate(
             ValidateTypes::Css(expect) => {
                 results.append(&mut validate_css(expect, &web_element).await);
             }
-            _ => continue,
+            ValidateTypes::Property(expect) => {
+                results.append(&mut validate_property(expect, &web_element).await)
+            }
         }
     }
 
@@ -152,10 +145,10 @@ async fn validate_text(expect: &String, web_element: &WebElement) -> ValidationR
             message: format!("Pass: Text is {}", expect),
         };
     }
-    return ValidationReult {
+    ValidationReult {
         validation: ValidationReultType::FAILED,
         message: format!("Failed: Text expected: [{}], actual: [{}]", expect, actual),
-    };
+    }
 }
 
 async fn validate_inner_html(expect: &String, web_element: &WebElement) -> ValidationReult {
@@ -176,13 +169,13 @@ async fn validate_inner_html(expect: &String, web_element: &WebElement) -> Valid
         };
     }
 
-    return ValidationReult {
+    ValidationReult {
         validation: ValidationReultType::FAILED,
         message: format!(
             "Failed: InnerHtml expected: [{}], actual: [{}]",
             expect, actual
         ),
-    };
+    }
 }
 
 async fn validate_css(
@@ -197,23 +190,66 @@ async fn validate_css(
             Err(e) => {
                 results.push(ValidationReult {
                     validation: ValidationReultType::FAILED,
-                    message: format!("Failed: Css error {}", e.to_string()),
+                    message: format!("Failed: Css error {}", e),
                 });
                 continue;
             }
         };
 
         if actual.eq(expect) {
-            results.push( ValidationReult {
+            results.push(ValidationReult {
                 validation: ValidationReultType::SUCCESS,
-                message: format!("Pass: CSS value [{}] is [{}]", css_value, expect),
+                message: format!("Pass: CSS [{}] is [{}]", css_value, expect),
             });
             continue;
         }
 
         results.push(ValidationReult {
             validation: ValidationReultType::FAILED,
-            message: format!("Failed: CSS value was [{}] expect [{}]", css_value, expect),
+            message: format!("Failed: CSS [{}] was [{}] expect [{}]", css_value, actual, expect),
+        })
+    }
+
+    results
+}
+
+async fn validate_property(
+    expected: &HashMap<String, String>,
+    web_element: &WebElement,
+) -> Vec<ValidationReult> {
+    let mut results: Vec<ValidationReult> = Vec::new();
+
+    for (prop, expect) in expected {
+        let prop_value: Option<String> = match web_element.prop(prop).await {
+            Ok(prop) => prop,
+            Err(e) => {
+                results.push(ValidationReult {
+                    validation: ValidationReultType::FAILED,
+                    message: format!("Failed: property error {}", e),
+                });
+                continue;
+            }
+        };
+
+
+        if let Some(actual) = prop_value {
+            if actual.eq(expect) {
+                results.push(ValidationReult {
+                    validation: ValidationReultType::SUCCESS,
+                    message: format!("Pass: property [{}] is [{}]", actual, expect),
+                });
+                continue;
+            }
+            results.push(ValidationReult {
+                validation: ValidationReultType::FAILED,
+                message: format!("Failed: property [{}] was [{}] expected [{}]", prop, actual, expect),
+            });
+            continue;
+        }
+
+        results.push(ValidationReult {
+            validation: ValidationReultType::FAILED,
+            message: format!("Failed: property [{}] not found", prop),
         })
     }
 

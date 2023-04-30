@@ -49,6 +49,7 @@ impl Task for Close {
                         name,
                         task_type: TaskTypes::CLOSE,
                         duration: start.elapsed().as_secs(),
+                        result: None
                     },
                 ));
             }

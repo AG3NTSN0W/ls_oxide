@@ -43,6 +43,7 @@ impl Task for Wait {
                 name,
                 task_type: TaskTypes::WAIT,
                 duration: start.elapsed().as_secs(),
+                result: None
             },
         ));
     }

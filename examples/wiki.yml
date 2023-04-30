@@ -16,6 +16,21 @@ tasks:
       element:
         xPath: '//*[@id="search-form"]/fieldset/button'
 
+  - name: "Validate Title"
+    validate:
+      element:
+        xPath: '//*[@id="firstHeading"]/span' 
+      expect:
+        css:
+          color: 'rgb(0, 0, 0)'
+          display: 'inline-block'
+          overflow: 'visible'
+          'text-indent': '0px'
+        text: 'Rust'
+        property:
+          name: 'foo'  
+
+
   - name: "search and press enter key"
     send_key:
       input: "Rust (programming language) \uE007"

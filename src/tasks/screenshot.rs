@@ -46,6 +46,7 @@ impl Task for Screenshot {
                     name,
                     task_type: TaskTypes::SCREENSHOT,
                     duration: start.elapsed().as_secs(),
+                    result: None
                 },
             )),
             Err(e) => {
