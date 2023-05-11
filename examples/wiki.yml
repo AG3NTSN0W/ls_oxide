@@ -30,7 +30,6 @@ tasks:
         property:
           name: 'foo'  
 
-
   - name: "search and press enter key"
     send_key:
       input: "Rust (programming language) \uE007"
@@ -38,7 +37,10 @@ tasks:
         id: "searchInput"
 
   - name: "Take a screenshot"
-    screenshot: "/tmp/screenshot.png"
+    screenshot: 
+      path: "/tmp/screenshot.png"
+      element:
+        xPath: '//*[@id="mw-content-text"]/div[1]/div[4]'
 
   - name: "wait 5 sec"
     wait: 5000
