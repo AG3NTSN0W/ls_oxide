@@ -64,8 +64,8 @@ impl WebDriverSession {
         Ok(WebDriverSession { driver, variables: HashMap::new() })
     }
 
-    pub fn add_variable(&mut self, key: String, value: String) {
-        self.variables.insert(key, value);
+    pub fn add_variable(&mut self, key: &String, value: &String) {
+        self.variables.insert(key.to_string(), value.to_string());
     }
 }
 

@@ -100,7 +100,7 @@ fn screenshot_result(
             },
         )),
         Err(e) => {
-            return Err((
+            Err((
                 web_driver_session,
                 TaskErr {
                     message: format!("Unable to take a screenshot: {:?}", e),
@@ -121,9 +121,9 @@ fn get_path(screenshot: &Mapping) -> Result<String, String> {
     };
 
     match screenshot_path.as_str() {
-        Some(screenshot_path) => return Ok(String::from(screenshot_path)),
-        None => return Err("path field is not a string".to_string()),
-    };
+        Some(screenshot_path) => Ok(String::from(screenshot_path)),
+        None => Err("path field is not a string".to_string()),
+    }
 }
 
 #[cfg(test)]

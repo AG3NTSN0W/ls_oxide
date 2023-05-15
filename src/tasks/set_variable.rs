@@ -9,7 +9,7 @@ use crate::{executor::{ExecuteResult, WebDriverSession}};
 use super::{get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes, get_task, to_hash};
 
 
-const TASK_TYPE: &'static str = "set_vars";
+const TASK_TYPE: &str = "set_vars";
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct SetVars {
@@ -21,7 +21,7 @@ pub struct SetVars {
 #[async_trait]
 impl Task for SetVars {
     fn new(task: &HashMap<String, Value>) -> TaskResult<SetVars> {
-        let name = get_task_name(&task)?;
+        let name = get_task_name(task)?;
         let variables = get_task(task, TASK_TYPE)?;
 
         let variables: HashMap<String, String> = match to_hash(variables) {
@@ -42,9 +42,12 @@ impl Task for SetVars {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, mut web_driver_session: WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
         
+        for (key, value) in self.variables.iter() { 
+            web_driver_session.add_variable(key, value);
+         }
 
         let name = self.name.clone();
         return Ok((
@@ -59,7 +62,7 @@ impl Task for SetVars {
     }
 }
 
-
+#[cfg(test)]
 mod tests {
     use super::*;
 
