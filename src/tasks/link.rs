@@ -3,7 +3,7 @@ use serde_yaml::Value;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use crate::executor::{ExecuteResult, WebDriverSession};
+use crate::{executor::{ExecuteResult, WebDriverSession}, variables::resolve_variables};
 
 use super::{
     get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes,
@@ -37,7 +37,9 @@ impl Task for Link {
         //     self._task_types, self.name, self.url
         // );
 
-        let link = web_driver_session.driver.goto(&self.url).await;
+        let url = resolve_variables(&self.url, &web_driver_session.variables);
+
+        let link = web_driver_session.driver.goto(url).await;
         let name = self.name.clone();
 
         match link {

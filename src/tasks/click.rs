@@ -76,7 +76,7 @@ impl Task for Click {
                     name,
                     task_type: TaskTypes::CLICK,
                     duration: start.elapsed().as_secs(),
-                    result: None
+                    result: None,
                 },
             )),
             Err(e) => {

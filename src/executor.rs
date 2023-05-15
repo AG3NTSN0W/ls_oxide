@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use thirtyfour::{Capabilities, DesiredCapabilities, ChromeCapabilities, WebDriver};
 
 use crate::tasks::{to_task, Tasks, TaskOk, TaskResult, TaskErr};
-use std::{path::PathBuf, str::FromStr, fs};
+use std::{path::PathBuf, str::FromStr, fs, collections::HashMap};
 
 pub type ExecuteResult = std::result::Result<(WebDriverSession, TaskOk), (WebDriverSession, TaskErr)>;
 
@@ -47,6 +47,7 @@ impl Executor {
 #[derive(Clone)]
 pub struct WebDriverSession {
     pub driver: WebDriver,
+    pub variables: HashMap<String, String>,
 }
 
 impl WebDriverSession {
@@ -60,7 +61,11 @@ impl WebDriverSession {
         };
 
 
-        Ok(WebDriverSession { driver })
+        Ok(WebDriverSession { driver, variables: HashMap::new() })
+    }
+
+    pub fn add_variable(&mut self, key: String, value: String) {
+        self.variables.insert(key, value);
     }
 }
 

@@ -10,7 +10,7 @@ use crate::{
     executor::{ExecuteResult, WebDriverSession},
 };
 
-use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes, ValidationReult, ValidationReultType};
+use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes, ValidationReult, ValidationReultType, to_hash};
 
 const TASK_TYPE: &str = "validate";
 #[derive(PartialEq, Eq, Debug)]
@@ -381,26 +381,6 @@ fn validate_data_mapping(
     }
 
     Ok(None)
-}
-
-fn to_hash(task_data: &Mapping) -> Result<HashMap<String, String>, String> {
-    let mut task_hash: HashMap<String, String> = HashMap::new();
-
-    for (key, value) in task_data {
-        let key = match key.as_str() {
-            None => return Err(format!("Key: {:?} is not a string", key)),
-            Some(k) => k.to_owned(),
-        };
-
-        let value = match value.as_str() {
-            None => return Err(format!("Value: {:?} is not a string", value)),
-            Some(v) => v.to_owned(),
-        };
-
-        task_hash.insert(key, value);
-    }
-
-    Ok(task_hash)
 }
 
 #[cfg(test)]

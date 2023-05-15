@@ -5,6 +5,7 @@ mod screenshot;
 mod send_key;
 mod validate;
 mod wait;
+mod set_variable;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,7 @@ use self::close::Close;
 use self::link::Link;
 use self::screenshot::Screenshot;
 use self::send_key::SendKey;
+use self::set_variable::SetVars;
 use self::validate::Validate;
 use self::wait::Wait;
 use async_trait::async_trait;
@@ -51,6 +53,7 @@ pub enum TaskTypes {
     WAIT,
     SCREENSHOT,
     VALIDATE,
+    SETVARIABLE,
     #[default]
     NONE,
 }
@@ -67,6 +70,7 @@ impl FromStr for TaskTypes {
             "wait" => Ok(TaskTypes::WAIT),
             "screenshot" => Ok(TaskTypes::SCREENSHOT),
             "validate" => Ok(TaskTypes::VALIDATE),
+            "set_vars" => Ok(TaskTypes::SETVARIABLE),
             _ => Err(TaskErr {
                 message: format!("Unknow Task Type: {:#?}", input),
                 task: None,
@@ -118,6 +122,7 @@ fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>>
         TaskTypes::WAIT => Box::new(<Wait as Task>::new(task_data)?),
         TaskTypes::SCREENSHOT => Box::new(<Screenshot as Task>::new(task_data)?),
         TaskTypes::VALIDATE => Box::new(<Validate as Task>::new(task_data)?),
+        TaskTypes::SETVARIABLE => Box::new(<SetVars as Task>::new(task_data)?),
         _ => {
             return Err(TaskErr {
                 message: "Invalid Task Type".to_string(),
@@ -335,6 +340,26 @@ impl fmt::Display for TaskErr {
             task
         )
     }
+}
+
+fn to_hash(task_data: &Mapping) -> Result<HashMap<String, String>, String> {
+    let mut task_hash: HashMap<String, String> = HashMap::new();
+
+    for (key, value) in task_data {
+        let key = match key.as_str() {
+            None => return Err(format!("Key: {:?} is not a string", key)),
+            Some(k) => k.to_owned(),
+        };
+
+        let value = match value.as_str() {
+            None => return Err(format!("Value: {:?} is not a string", value)),
+            Some(v) => v.to_owned(),
+        };
+
+        task_hash.insert(key, value);
+    }
+
+    Ok(task_hash)
 }
 
 #[cfg(test)]
