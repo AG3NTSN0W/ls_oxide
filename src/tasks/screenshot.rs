@@ -7,7 +7,7 @@ use thirtyfour::{prelude::WebDriverError, By};
 
 use crate::{
     element::Element,
-    executor::{ExecuteResult, WebDriverSession},
+    executor::{ExecuteResult, WebDriverSession}, variables::resolve_variables,
 };
 
 use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
@@ -55,7 +55,7 @@ impl Task for Screenshot {
         let start = Instant::now();
 
         if let Some(element) = &self.element {
-            let by: By = Element::find_by(element);
+            let by: By = Element::find_by_resolve(element, &web_driver_session.variables);
             let element = match web_driver_session.driver.find(by).await {
                 Ok(element) => element,
                 Err(e) => {
@@ -70,7 +70,9 @@ impl Task for Screenshot {
                 }
             };
 
-            let screenshot = element.screenshot(Path::new(&self.path)).await;
+            let path = resolve_variables(&self.path, &web_driver_session.variables);
+
+            let screenshot = element.screenshot(Path::new(&path)).await;
             return screenshot_result(screenshot, web_driver_session, &self.name, start);
         }
 

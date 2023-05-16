@@ -51,7 +51,7 @@ impl Task for SendKey {
         //     "Taske Type: {:#?}\nName: {:#?}\nelement Type: {:#?},\nValue: {}",
         //     self._task_types, self.name, self.element.element_type, self.element.value
         // );
-        let by = Element::find_by(&self.element);
+        let by = Element::find_by_resolve(&self.element, &web_driver_session.variables);
 
         let element = match web_driver_session.driver.find(by).await {
             Ok(element) => element,

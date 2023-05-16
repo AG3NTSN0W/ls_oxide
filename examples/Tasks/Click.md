@@ -33,3 +33,10 @@ This task combines moving to the center of an element with pressing and releasin
         element:
             className: 'pure-button-primary-progressive'
     ```   
+## Variables support
+```
+  - name: "Click search button"
+    click:
+      element:
+        xPath: "{click}"
+```        

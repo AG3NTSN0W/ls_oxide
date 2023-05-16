@@ -47,3 +47,11 @@ This task will take a screenshot of the current window or of an element.
         element:
             className: 'vector-toc-level-1-active vector-toc-list-item-active'
     ```     
+## Variables support
+```
+    - name: "Take a screenshot"
+      screenshot: 
+        path: "{path}"
+        element:
+            xPath: "{xPath}"
+```    

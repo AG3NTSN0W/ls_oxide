@@ -9,6 +9,8 @@ This task allows you to add variables to be used inside other tasks
 
 ### Supported Tasks
 * send_key
+* screenshot
+* click
 
 ## Example
 ```
@@ -16,4 +18,5 @@ This task allows you to add variables to be used inside other tasks
     set_vars:
       input: "Rust"
       enterKey: "\uE007" 
+      xPath: '//*[@id="searchInput"]'
 ```      

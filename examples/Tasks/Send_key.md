@@ -42,5 +42,5 @@ This task combines moving to the center of an element with pressing and releasin
       send_key:
         input: "{input}"
         element:
-            xPath: '//*[@id="searchInput"]'
+            xPath: "{xPath}"
 ```    
