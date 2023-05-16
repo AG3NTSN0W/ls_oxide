@@ -27,13 +27,13 @@ You can use Selenium (see instructions below) or you can use `chromedriver`/`gec
 - using firefox `(default)` | `geckodriver`
 
     ```
-    ls_oxside -t ./examples/wiki.yml
+    ls_oxside -t ./examples/wiki/wiki.yml
     ```
 
 - using chrome | `chromedriver`
 
     ```
-    ls_oxside -t ./examples/wiki.yml -c ./examples/config.yml
+    ls_oxside -t ./examples/wiki/wiki.yml -c ./examples/wiki/config.yml
     ```
 
 
@@ -61,12 +61,12 @@ For more information on running selenium in docker, visit
 - using firefox `(default)` | `geckodriver`
 
     ```
-    cargo run -- -t ./examples/wiki.yml
+    cargo run -- -t ./examples/wiki/wiki.yml
     ```
 
 - using chrome | `chromedriver`
 
     ```
-    cargo run -- -t ./examples/wiki.yml -c ./examples/config.yml
+    cargo run -- -t ./examples/wiki/wiki.yml -c ./examples/wiki/config.yml
     ```        
 

@@ -5,13 +5,18 @@ tasks:
     link:
       url: "https://wikipedia.org"
 
+  - name: "set vars"
+    set_vars:
+      input: "Java"
+      enterKey: "\uE007"
+    
   - name: "enter rust in search"
     send_key:
-      input: Rust
+      input: "{input}"
       element:
         xPath: '//*[@id="searchInput"]'
 
-  - name: "Click save button"
+  - name: "Click search button"
     click:
       element:
         xPath: '//*[@id="search-form"]/fieldset/button'
@@ -26,13 +31,13 @@ tasks:
           display: 'inline-block'
           overflow: 'visible'
           'text-indent': '0px'
-        text: 'Rust'
+        text: '{input}'
         property:
           name: 'foo'  
 
   - name: "search and press enter key"
     send_key:
-      input: "Rust (programming language) \uE007"
+      input: "{input} (programming language) {enterKey}"
       element:
         id: "searchInput"
 

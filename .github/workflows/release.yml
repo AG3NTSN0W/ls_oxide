@@ -40,7 +40,6 @@ jobs:
         run: tar -czvf ls_oxide_Linux_x86_64.tar.gz ls_oxide_Linux_x86_64
 
       - name: Release
-#         uses: actions/upload-artifact@v3
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -48,30 +47,46 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # build-win:
-  #   runs-on: windows-latest
+  build-win:
+    runs-on: windows-latest
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
 
-  #     - name: Install latest rust toolchain
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         default: true
-  #         override: true
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          override: true
 
-  #     - name: Build
-  #       run: cargo build --all --release
+      - name: Build
+        run: |
+           cargo build --all --release 
+           strip target/release/ls_oxide 
+           mkdir ls_oxide_win/ 
+           mv target/release/ls_oxide ls_oxide_win/ls_oxide
 
-  #     - name: Release
-  #       uses: softprops/action-gh-release@v1
-  #       if: startsWith(github.ref, 'refs/tags/')
-  #       with:
-  #         files: target/release/ls_oxide.exe
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: move examples
+        run: mv examples ls_oxide_win/
+
+      - name: move license
+        run: mv LICENSE ls_oxide_win/
+
+      - name: move README.md
+        run: mv README.md ls_oxide_win/  
+
+      - name: Tar files
+        run: tar -czvf ls_oxide_win.tar.gz ls_oxide_win
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ls_oxide_win.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # build-mac:
   #   runs-on: macos-latest

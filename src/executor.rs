@@ -33,9 +33,10 @@ impl Executor {
                     web_driver = driver;
                     self.results.push(task_ok)
                 }
-                Err((web_driver, _)) => {
+                Err((web_driver, e)) => {
                     web_driver.driver.quit().await.unwrap();
-                    panic!("no result")
+                    println!("{e}");
+                    break;
                 },
             }
         }

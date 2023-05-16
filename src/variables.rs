@@ -12,8 +12,8 @@ pub fn resolve_variables(text: &str, vars: &HashMap<String, String>) -> String {
 
     let mut resolved_text: String = String::from(text);
     for cap in RE_STRING.captures_iter(text) {
-        let var = &cap[0];
-        let key = var.replace(&['{', '}'][..], "");
+        let var: &str = &cap[0];
+        let key: String = var.replace(&['{', '}'][..], "");
 
         if let Some(value) = vars.get(&key) {
             resolved_text = resolved_text.replace(var, value);
