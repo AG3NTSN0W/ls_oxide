@@ -13,6 +13,7 @@ This task can be use to validate an element text, css and properties
 
 ### Optional    
 * text: The expected text
+* innerHtml: The expected innerHtml
 * css: The CSS properties you want to validate -> `css-property: expected`
 * property: the properties you want to validate -> `property: expected`
 
@@ -28,7 +29,21 @@ This task can be use to validate an element text, css and properties
           display: 'inline-block'
           overflow: 'visible'
           'text-indent': '0px'
-        text: '{input}'
+        text: 'Rust'
+        innerHtml: ''
         property:
           name: 'foo'  
 ```      
+## Variables support
+```
+  - name: "Validate Title"
+    validate:
+      element:
+        xPath: '//*[@id="firstHeading"]/span' 
+      expect:
+        css:
+          color: "{color}"
+        text: "{input}"
+        property:
+          name: "{property}"
+```    

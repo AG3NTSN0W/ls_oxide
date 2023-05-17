@@ -9,6 +9,7 @@ tasks:
     set_vars:
       input: "Rust"
       enterKey: "\uE007"
+      color: "rgb(0, 0, 0)"
     
   - name: "enter rust in search"
     send_key:
@@ -27,11 +28,11 @@ tasks:
         xPath: '//*[@id="firstHeading"]/span' 
       expect:
         css:
-          color: 'rgb(0, 0, 0)'
+          color: "{color}"
           display: 'inline-block'
           overflow: 'visible'
           'text-indent': '0px'
-        text: 'Rust'
+        text: "{input}"
         property:
           name: 'foo'  
 
