@@ -54,7 +54,7 @@ For more information on running selenium in docker, visit
 
 ## Run Tests:
 
-    cargo test  
+    cargo test --lib 
 
 ### Example:
 

@@ -3,9 +3,9 @@ mod close;
 mod link;
 mod screenshot;
 mod send_key;
+mod set_variable;
 mod validate;
 mod wait;
-mod set_variable;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,7 @@ use self::set_variable::SetVars;
 use self::validate::Validate;
 use self::wait::Wait;
 use async_trait::async_trait;
+use core::fmt::Debug;
 
 pub type Tasks = Vec<Box<dyn Task>>;
 pub type TaskResult<T> = std::result::Result<T, TaskErr>;
@@ -80,17 +81,17 @@ impl FromStr for TaskTypes {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValidationReultType {
     SUCCESS,
     FAILED,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
-struct ValidationReult {
-    validation: ValidationReultType,
-    message: String,
+pub struct ValidationResult {
+    pub validation: ValidationReultType,
+    pub message: String,
 }
 
 pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
@@ -303,12 +304,12 @@ pub fn get_task_name(task: &HashMap<String, Value>) -> TaskResult<String> {
     Ok(String::from(name))
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskOk {
-    name: String,
-    task_type: TaskTypes,
-    duration: u64,
-    result: Option<Vec<ValidationReult>>,
+    pub name: String,
+    pub task_type: TaskTypes,
+    pub duration: u64,
+    pub result: Option<Vec<ValidationResult>>,
 }
 
 impl fmt::Display for TaskOk {
@@ -326,6 +327,24 @@ pub struct TaskErr {
     message: String,
     task_type: Option<TaskTypes>,
     task: Option<HashMap<String, Value>>,
+}
+
+impl TaskErr {
+    pub fn new(
+        message: String,
+        task_type: Option<TaskTypes>,
+        task: Option<HashMap<String, Value>>,
+    ) -> TaskErr {
+        TaskErr {
+            message,
+            task_type,
+            task,
+        }
+    }
+
+    pub fn get_message(&self) -> &str {
+        &self.message
+    }
 }
 
 impl fmt::Display for TaskErr {

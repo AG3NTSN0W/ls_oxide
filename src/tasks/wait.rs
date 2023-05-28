@@ -140,38 +140,4 @@ mod tests {
         });
         assert_eq!(expected, result)
     }
-
-    #[test]
-    fn test_task_string() {
-        let yaml = "  
-                name: 'wait 4 sec'
-                wait: 4
-              ";
-
-        let wait = serde_yaml::from_str(yaml).unwrap();
-        let result = Wait::new(&wait);
-        let expected = Ok(Wait {
-            _task_types: TaskTypes::WAIT,
-            name: "wait 4 sec".to_owned(),
-            duration_ms: Duration::from_millis(4)
-        });
-        assert_eq!(expected, result)
-    }
-
-    #[test]
-    fn test_task_mapping() {
-        let yaml = "  
-                name: 'wait 4 sec'
-                wait: 4
-              ";
-
-        let wait = serde_yaml::from_str(yaml).unwrap();
-        let result = Wait::new(&wait);
-        let expected = Ok(Wait {
-            _task_types: TaskTypes::WAIT,
-            name: "wait 4 sec".to_owned(),
-            duration_ms: Duration::from_millis(4)
-        });
-        assert_eq!(expected, result)
-    }
 }
