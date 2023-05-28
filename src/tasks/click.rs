@@ -50,7 +50,7 @@ impl Task for Click {
         //     self._task_types, self.name, self.element.element_type, self.element.value
         // );
 
-        let by: By = Element::find_by(&self.element);
+        let by: By = Element::find_by_resolve(&self.element, &web_driver_session.variables);
 
         let element = match web_driver_session.driver.find(by).await {
             Ok(element) => element,
@@ -76,7 +76,7 @@ impl Task for Click {
                     name,
                     task_type: TaskTypes::CLICK,
                     duration: start.elapsed().as_secs(),
-                    result: None
+                    result: None,
                 },
             )),
             Err(e) => {

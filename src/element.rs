@@ -1,6 +1,8 @@
 use serde_yaml::{Mapping, Value};
-use std::str::FromStr;
+use std::{str::FromStr, collections::HashMap};
 use thirtyfour::By;
+
+use crate::variables::resolve_variables;
 
 type ElementValue<'a> = (&'a Value, &'a Value);
 type ElementStr<'a> = (&'a str, &'a str);
@@ -87,6 +89,17 @@ impl Element {
             ElementType::XPATH => By::XPath(&element.value),
         }
     }
+
+    pub fn find_by_resolve(element: &Element, vars: &HashMap<String, String>) -> By {
+        let value = resolve_variables(&element.value, vars);
+        
+        match element.element_type {
+            ElementType::CLASSNAME => By::ClassName(&value),
+            ElementType::ID => By::Id(&value),
+            ElementType::XPATH => By::XPath(&value),
+        }
+    }
+
 }
 
 #[cfg(test)]

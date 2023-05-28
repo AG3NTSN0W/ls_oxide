@@ -3,6 +3,7 @@ mod close;
 mod link;
 mod screenshot;
 mod send_key;
+mod set_variable;
 mod validate;
 mod wait;
 
@@ -19,9 +20,11 @@ use self::close::Close;
 use self::link::Link;
 use self::screenshot::Screenshot;
 use self::send_key::SendKey;
+use self::set_variable::SetVars;
 use self::validate::Validate;
 use self::wait::Wait;
 use async_trait::async_trait;
+use core::fmt::Debug;
 
 pub type Tasks = Vec<Box<dyn Task>>;
 pub type TaskResult<T> = std::result::Result<T, TaskErr>;
@@ -51,6 +54,7 @@ pub enum TaskTypes {
     WAIT,
     SCREENSHOT,
     VALIDATE,
+    SETVARIABLE,
     #[default]
     NONE,
 }
@@ -67,6 +71,7 @@ impl FromStr for TaskTypes {
             "wait" => Ok(TaskTypes::WAIT),
             "screenshot" => Ok(TaskTypes::SCREENSHOT),
             "validate" => Ok(TaskTypes::VALIDATE),
+            "set_vars" => Ok(TaskTypes::SETVARIABLE),
             _ => Err(TaskErr {
                 message: format!("Unknow Task Type: {:#?}", input),
                 task: None,
@@ -76,17 +81,17 @@ impl FromStr for TaskTypes {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValidationReultType {
     SUCCESS,
     FAILED,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
-struct ValidationReult {
-    validation: ValidationReultType,
-    message: String,
+pub struct ValidationResult {
+    pub validation: ValidationReultType,
+    pub message: String,
 }
 
 pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
@@ -118,6 +123,7 @@ fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>>
         TaskTypes::WAIT => Box::new(<Wait as Task>::new(task_data)?),
         TaskTypes::SCREENSHOT => Box::new(<Screenshot as Task>::new(task_data)?),
         TaskTypes::VALIDATE => Box::new(<Validate as Task>::new(task_data)?),
+        TaskTypes::SETVARIABLE => Box::new(<SetVars as Task>::new(task_data)?),
         _ => {
             return Err(TaskErr {
                 message: "Invalid Task Type".to_string(),
@@ -298,12 +304,12 @@ pub fn get_task_name(task: &HashMap<String, Value>) -> TaskResult<String> {
     Ok(String::from(name))
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskOk {
-    name: String,
-    task_type: TaskTypes,
-    duration: u64,
-    result: Option<Vec<ValidationReult>>,
+    pub name: String,
+    pub task_type: TaskTypes,
+    pub duration: u64,
+    pub result: Option<Vec<ValidationResult>>,
 }
 
 impl fmt::Display for TaskOk {
@@ -323,6 +329,24 @@ pub struct TaskErr {
     task: Option<HashMap<String, Value>>,
 }
 
+impl TaskErr {
+    pub fn new(
+        message: String,
+        task_type: Option<TaskTypes>,
+        task: Option<HashMap<String, Value>>,
+    ) -> TaskErr {
+        TaskErr {
+            message,
+            task_type,
+            task,
+        }
+    }
+
+    pub fn get_message(&self) -> &str {
+        &self.message
+    }
+}
+
 impl fmt::Display for TaskErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let task = self.task.clone().unwrap_or_default();
@@ -335,6 +359,26 @@ impl fmt::Display for TaskErr {
             task
         )
     }
+}
+
+fn to_hash(task_data: &Mapping) -> Result<HashMap<String, String>, String> {
+    let mut task_hash: HashMap<String, String> = HashMap::new();
+
+    for (key, value) in task_data {
+        let key = match key.as_str() {
+            None => return Err(format!("Key: {:?} is not a string", key)),
+            Some(k) => k.to_owned(),
+        };
+
+        let value = match value.as_str() {
+            None => return Err(format!("Value: {:?} is not a string", value)),
+            Some(v) => v.to_owned(),
+        };
+
+        task_hash.insert(key, value);
+    }
+
+    Ok(task_hash)
 }
 
 #[cfg(test)]

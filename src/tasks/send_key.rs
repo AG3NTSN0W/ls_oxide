@@ -3,7 +3,7 @@ use serde_yaml::Value;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use crate::{element::Element, executor::{ExecuteResult, WebDriverSession}};
+use crate::{element::Element, executor::{ExecuteResult, WebDriverSession}, variables::resolve_variables};
 
 use super::{
     get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes,
@@ -51,8 +51,7 @@ impl Task for SendKey {
         //     "Taske Type: {:#?}\nName: {:#?}\nelement Type: {:#?},\nValue: {}",
         //     self._task_types, self.name, self.element.element_type, self.element.value
         // );
-
-        let by = Element::find_by(&self.element);
+        let by = Element::find_by_resolve(&self.element, &web_driver_session.variables);
 
         let element = match web_driver_session.driver.find(by).await {
             Ok(element) => element,
@@ -71,7 +70,8 @@ impl Task for SendKey {
             }
         };
 
-        let send_key = element.send_keys(&self.input).await;
+        let input = resolve_variables(&self.input, &web_driver_session.variables);
+        let send_key = element.send_keys(input).await;
         let name = self.name.clone();
 
         match send_key {
