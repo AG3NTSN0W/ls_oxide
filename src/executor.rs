@@ -23,8 +23,12 @@ impl Executor {
         })
     }
 
-    pub async fn execute(&mut self) -> Result<&Vec<TaskOk>, String> {
+    pub async fn execute(&mut self, vars: Option<Vec<(String, String)>>) -> Result<&Vec<TaskOk>, String> {
         let mut web_driver: WebDriverSession = WebDriverSession::new(&self.config_path).await?;
+
+        if let Some(vars) = vars {
+            vars.iter().for_each(|(key, value)| web_driver.add_variable(key, value));
+        }
   
         for task in self.tasks.iter() {
             let execute = task.execute(web_driver).await;
