@@ -7,10 +7,14 @@ use thirtyfour::WebElement;
 
 use crate::{
     element::Element,
-    executor::{ExecuteResult, WebDriverSession}, variables::resolve_variables,
+    executor::{ExecuteResult, WebDriverSession},
+    variables::resolve_variables,
 };
 
-use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes, ValidationResult, ValidationReultType, to_hash};
+use super::{
+    get_task, get_task_name, to_hash, Task, TaskErr, TaskOk, TaskResult, TaskTypes,
+    ValidationResult, ValidationReultType,
+};
 
 const TASK_TYPE: &str = "validate";
 #[derive(PartialEq, Eq, Debug)]
@@ -38,11 +42,11 @@ impl Task for Validate {
         let element = match Element::new(validate) {
             Ok(element) => element,
             Err(err) => {
-                return Err(TaskErr {
-                    message: err,
-                    task: Some(task.clone()),
-                    task_type: Some(TaskTypes::CLICK),
-                })
+                return Err(TaskErr::new(
+                    err,
+                    Some(TaskTypes::CLICK),
+                    Some(task.clone()),
+                ))
             }
         };
 
@@ -68,11 +72,7 @@ impl Task for Validate {
             Err(e) => {
                 return Err((
                     web_driver_session,
-                    TaskErr {
-                        message: format!("{}", e),
-                        task: None,
-                        task_type: Some(TaskTypes::VALIDATE),
-                    },
+                    TaskErr::new(format!("{}", e), Some(TaskTypes::VALIDATE), None),
                 ));
             }
         };
@@ -83,11 +83,7 @@ impl Task for Validate {
                 Err(e) => {
                     return Err((
                         web_driver_session,
-                        TaskErr {
-                            message: e,
-                            task: None,
-                            task_type: Some(TaskTypes::VALIDATE),
-                        },
+                        TaskErr::new(e, Some(TaskTypes::VALIDATE), None),
                     ))
                 }
             };
@@ -279,40 +275,40 @@ fn get_expects(task: &HashMap<String, Value>) -> TaskResult<Vec<ValidateTypes>> 
     let task_data = match task.get(TASK_TYPE) {
         Some(task_data) => task_data.as_mapping(),
         None => {
-            return Err(TaskErr {
-                message: String::from("Validate Task is no a map"),
-                task: Some(task.clone()),
-                task_type: Some(TaskTypes::VALIDATE),
-            })
+            return Err(TaskErr::new(
+                String::from("Validate Task is no a map"),
+                Some(TaskTypes::VALIDATE),
+                Some(task.clone()),
+            ))
         }
     };
 
     let task_mapping = match task_data {
         Some(t) => t,
         None => {
-            return Err(TaskErr {
-                message: String::from("Validate Task is is Malformed"),
-                task: Some(task.clone()),
-                task_type: Some(TaskTypes::VALIDATE),
-            })
+            return Err(TaskErr::new(
+                String::from("Validate Task is is Malformed"),
+                Some(TaskTypes::VALIDATE),
+                Some(task.clone()),
+            ))
         }
     };
 
     if task_mapping.is_empty() {
-        return Err(TaskErr {
-            message: String::from("Validate Task is empty"),
-            task: Some(task.clone()),
-            task_type: Some(TaskTypes::VALIDATE),
-        });
+        return Err(TaskErr::new(
+            String::from("Validate Task is empty"),
+            Some(TaskTypes::VALIDATE),
+            Some(task.clone()),
+        ));
     }
 
     match validate_task(task_mapping) {
         Ok(v) => Ok(v),
-        Err(e) => Err(TaskErr {
-            message: e,
-            task: Some(task.clone()),
-            task_type: Some(TaskTypes::VALIDATE),
-        }),
+        Err(e) => Err(TaskErr::new(
+            e,
+            Some(TaskTypes::VALIDATE),
+            Some(task.clone()),
+        )),
     }
 }
 
@@ -413,11 +409,11 @@ mod tests {
     fn test_empty_task() {
         let validate = HashMap::new();
         let result = Validate::new(&validate);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(validate),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(validate),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -672,11 +668,11 @@ mod tests {
 
         let data = serde_yaml::from_str(yaml).unwrap();
         let result = Validate::new(&data);
-        let expected = Err(TaskErr {
-            message: String::from("property value is not a map"),
-            task: Some(data),
-            task_type: Some(TaskTypes::VALIDATE),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("property value is not a map"),
+            Some(TaskTypes::VALIDATE),
+            Some(data),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -699,11 +695,11 @@ mod tests {
 
         let data = serde_yaml::from_str(yaml).unwrap();
         let result = Validate::new(&data);
-        let expected = Err(TaskErr {
-            message: String::from("css value is not a map"),
-            task: Some(data),
-            task_type: Some(TaskTypes::VALIDATE),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("css value is not a map"),
+            Some(TaskTypes::VALIDATE),
+            Some(data),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -727,11 +723,11 @@ mod tests {
 
         let data = serde_yaml::from_str(yaml).unwrap();
         let result = Validate::new(&data);
-        let expected = Err(TaskErr {
-            message: String::from("Key: Number(2) is not a string"),
-            task: Some(data),
-            task_type: Some(TaskTypes::VALIDATE),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Key: Number(2) is not a string"),
+            Some(TaskTypes::VALIDATE),
+            Some(data),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -755,11 +751,11 @@ mod tests {
 
         let data = serde_yaml::from_str(yaml).unwrap();
         let result = Validate::new(&data);
-        let expected = Err(TaskErr {
-            message: String::from("Value: Number(2) is not a string"),
-            task: Some(data),
-            task_type: Some(TaskTypes::VALIDATE),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Value: Number(2) is not a string"),
+            Some(TaskTypes::VALIDATE),
+            Some(data),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -782,11 +778,11 @@ mod tests {
 
         let data = serde_yaml::from_str(yaml).unwrap();
         let result = Validate::new(&data);
-        let expected = Err(TaskErr {
-            message: String::from("text - value is not a string"),
-            task: Some(data),
-            task_type: Some(TaskTypes::VALIDATE),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("text - value is not a string"),
+            Some(TaskTypes::VALIDATE),
+            Some(data),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -809,11 +805,11 @@ mod tests {
 
         let data = serde_yaml::from_str(yaml).unwrap();
         let result = Validate::new(&data);
-        let expected = Err(TaskErr {
-            message: String::from("innerHtml - value is not a string"),
-            task: Some(data),
-            task_type: Some(TaskTypes::VALIDATE),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("innerHtml - value is not a string"),
+            Some(TaskTypes::VALIDATE),
+            Some(data),
+        ));
         assert_eq!(expected, result)
     }
 }

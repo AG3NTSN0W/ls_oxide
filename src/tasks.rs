@@ -8,10 +8,12 @@ mod validate;
 mod wait;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
+use crate::structs::task_err::TaskErr;
+use crate::structs::task_ok::TaskOk;
+
 use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use std::fmt;
 use std::str::FromStr;
 use std::{fs, path::PathBuf};
 
@@ -72,11 +74,11 @@ impl FromStr for TaskTypes {
             "screenshot" => Ok(TaskTypes::SCREENSHOT),
             "validate" => Ok(TaskTypes::VALIDATE),
             "set_vars" => Ok(TaskTypes::SETVARIABLE),
-            _ => Err(TaskErr {
-                message: format!("Unknow Task Type: {:#?}", input),
-                task: None,
-                task_type: None,
-            }),
+            _ => Err(TaskErr::new(
+                format!("Unknow Task Type: {:#?}", input),
+                None,
+                None,
+            )),
         }
     }
 }
@@ -125,11 +127,11 @@ fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>>
         TaskTypes::VALIDATE => Box::new(<Validate as Task>::new(task_data)?),
         TaskTypes::SETVARIABLE => Box::new(<SetVars as Task>::new(task_data)?),
         _ => {
-            return Err(TaskErr {
-                message: "Invalid Task Type".to_string(),
-                task: Some(task_data.clone()),
-                task_type: Some(TaskTypes::NONE),
-            })
+            return Err(TaskErr::new(
+                "Invalid Task Type".to_string(),
+                Some(TaskTypes::NONE),
+                Some(task_data.clone()),
+            ))
         }
     };
     Ok(task)
@@ -139,20 +141,20 @@ fn get_task_data(path: PathBuf) -> TaskResult<TaskData> {
     let yaml = match fs::read_to_string(path) {
         Ok(data) => data,
         Err(_) => {
-            return Err(TaskErr {
-                message: String::from("Unable to read File"),
-                task: None,
-                task_type: None,
-            })
+            return Err(TaskErr::new(
+                String::from("Unable to read File"),
+                None,
+                None,
+            ))
         }
     };
     match serde_yaml::from_str(&yaml) {
         Ok(data) => Ok(data),
-        Err(_) => Err(TaskErr {
-            message: String::from("Unable to deserialize file"),
-            task: None,
-            task_type: None,
-        }),
+        Err(_) => Err(TaskErr::new(
+            String::from("Unable to deserialize file"),
+            None,
+            None,
+        )),
     }
 }
 
@@ -165,19 +167,17 @@ fn get_task_type(task: &HashMap<String, Value>) -> TaskResult<TaskTypes> {
         return match TaskTypes::from_str(key) {
             Ok(k) => Ok(k),
             Err(e) => {
-                return Err(TaskErr {
-                    message: e.message,
-                    task: Some(task.clone()),
-                    task_type: None,
-                })
+                let mut task_err = e.clone();
+                task_err.set_task(Some(task.clone()));
+                return Err(task_err);
             }
         };
     }
-    Err(TaskErr {
-        message: String::from("Task data is Malformed"),
-        task: Some(task.clone()),
-        task_type: None,
-    })
+    Err(TaskErr::new(
+        String::from("Task data is Malformed"),
+        None,
+        Some(task.clone()),
+    ))
 }
 
 fn validate_first_task(task_data: &TaskData) -> TaskResult<()> {
@@ -199,18 +199,18 @@ fn validate_first_task(task_data: &TaskData) -> TaskResult<()> {
         if key == TaskTypes::LINK {
             return Ok(());
         }
-        return Err(TaskErr {
-            message: String::from("First Task should be a Link"),
-            task: None,
-            task_type: None,
-        });
+        return Err(TaskErr::new(
+            String::from("First Task should be a Link"),
+            None,
+            None,
+        ));
     }
 
-    Err(TaskErr {
-        message: String::from("First Task not found"),
-        task: None,
-        task_type: None,
-    })
+    Err(TaskErr::new(
+        String::from("First Task not found"),
+        None,
+        None,
+    ))
 }
 
 fn is_last_task_close(task_data: &TaskData) -> TaskResult<bool> {
@@ -240,31 +240,31 @@ pub fn get_task<'a>(task: &'a HashMap<String, Value>, key: &str) -> TaskResult<&
     let task_data = match task.get(key) {
         Some(task_data) => task_data.as_mapping(),
         None => {
-            return Err(TaskErr {
-                message: String::from("Malformed Task"),
-                task: Some(task.clone()),
-                task_type: None,
-            })
+            return Err(TaskErr::new(
+                String::from("Malformed Task"),
+                None,
+                Some(task.clone()),
+            ))
         }
     };
 
     let task_mapping = match task_data {
         Some(t) => t,
         None => {
-            return Err(TaskErr {
-                message: String::from("Task data is Malformed"),
-                task: Some(task.clone()),
-                task_type: None,
-            })
+            return Err(TaskErr::new(
+                String::from("Task data is Malformed"),
+                None,
+                Some(task.clone()),
+            ))
         }
     };
 
     if task_mapping.is_empty() {
-        return Err(TaskErr {
-            message: String::from("Task data is empty"),
-            task: Some(task.clone()),
-            task_type: None,
-        });
+        return Err(TaskErr::new(
+            String::from("Task data is empty"),
+            None,
+            Some(task.clone()),
+        ));
     }
 
     Ok(task_mapping)
@@ -274,91 +274,34 @@ pub fn get_task_name(task: &HashMap<String, Value>) -> TaskResult<String> {
     let task_value = match task.get(NAME) {
         Some(task_value) => task_value,
         None => {
-            return Err(TaskErr {
-                message: String::from("Malformed Task"),
-                task: Some(task.clone()),
-                task_type: None,
-            })
+            return Err(TaskErr::new(
+                String::from("Malformed Task"),
+                None,
+                Some(task.clone()),
+            ))
         }
     };
 
     let name = match task_value.as_str() {
         Some(name) => name,
         None => {
-            return Err(TaskErr {
-                message: String::from("Task name is not a string"),
-                task: Some(task.clone()),
-                task_type: None,
-            })
+            return Err(TaskErr::new(
+                String::from("Task name is not a string"),
+                None,
+                Some(task.clone()),
+            ))
         }
     };
 
     if name.is_empty() {
-        return Err(TaskErr {
-            message: String::from("Task name can`t be empty"),
-            task: Some(task.clone()),
-            task_type: None,
-        });
+        return Err(TaskErr::new(
+            String::from("Task name can`t be empty"),
+            None,
+            Some(task.clone()),
+        ));
     }
 
     Ok(String::from(name))
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TaskOk {
-    pub name: String,
-    pub task_type: TaskTypes,
-    pub duration: u64,
-    pub result: Option<Vec<ValidationResult>>,
-}
-
-impl fmt::Display for TaskOk {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{:?}: {} [{:#?}s]\n{:#?}",
-            self.task_type, self.name, self.duration, self.result
-        )
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TaskErr {
-    message: String,
-    task_type: Option<TaskTypes>,
-    task: Option<HashMap<String, Value>>,
-}
-
-impl TaskErr {
-    pub fn new(
-        message: String,
-        task_type: Option<TaskTypes>,
-        task: Option<HashMap<String, Value>>,
-    ) -> TaskErr {
-        TaskErr {
-            message,
-            task_type,
-            task,
-        }
-    }
-
-    pub fn get_message(&self) -> &str {
-        &self.message
-    }
-}
-
-impl fmt::Display for TaskErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let task = self.task.clone().unwrap_or_default();
-
-        write!(
-            f,
-            "{:?}: {}\n{:#?}",
-            self.task_type.unwrap_or_default(),
-            self.message,
-            task
-        )
-    }
 }
 
 fn to_hash(task_data: &Mapping) -> Result<HashMap<String, String>, String> {
@@ -390,11 +333,11 @@ mod tests {
         let task: HashMap<String, Value> = HashMap::new();
 
         let result = get_task_name(&task);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(task),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(task),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -404,11 +347,11 @@ mod tests {
         task.insert(String::from("name"), Value::from(""));
 
         let result = get_task_name(&task);
-        let expected = Err(TaskErr {
-            message: String::from("Task name can`t be empty"),
-            task: Some(task),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task name can`t be empty"),
+            None,
+            Some(task),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -418,11 +361,11 @@ mod tests {
         task.insert(String::from("name"), Value::from(0));
 
         let result = get_task_name(&task);
-        let expected = Err(TaskErr {
-            message: String::from("Task name is not a string"),
-            task: Some(task),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task name is not a string"),
+            None,
+            Some(task),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -432,11 +375,11 @@ mod tests {
         task.insert(String::from("name"), Value::from(0));
 
         let result = get_task(&task, "");
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(task.clone()),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(task.clone()),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -447,11 +390,11 @@ mod tests {
         task.insert(String::from("send_key"), Value::from(""));
 
         let result = get_task(&task, "send_key");
-        let expected = Err(TaskErr {
-            message: String::from("Task data is Malformed"),
-            task: Some(task.clone()),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task data is Malformed"),
+            None,
+            Some(task.clone()),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -462,11 +405,11 @@ mod tests {
         task.insert(String::from("send_key"), Value::from(Mapping::new()));
 
         let result = get_task(&task, "send_key");
-        let expected = Err(TaskErr {
-            message: String::from("Task data is empty"),
-            task: Some(task.clone()),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task data is empty"),
+            None,
+            Some(task.clone()),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -574,11 +517,11 @@ tasks:
 
         let task: TaskData = serde_yaml::from_str(yaml).unwrap();
         let result = validate_first_task(&task);
-        let expected = Err(TaskErr {
-            message: String::from("First Task should be a Link"),
-            task: None,
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("First Task should be a Link"),
+            None,
+            None,
+        ));
         assert_eq!(expected, result)
     }
 
@@ -609,11 +552,11 @@ tasks:
         task.insert(String::from("foo"), Value::from(Mapping::new()));
 
         let result = get_task_type(&task);
-        let expected = Err(TaskErr {
-            message: String::from("Unknow Task Type: \"foo\""),
-            task: Some(task.clone()),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Unknow Task Type: \"foo\""),
+            None,
+            Some(task.clone()),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -623,11 +566,11 @@ tasks:
         task.insert(String::from("name"), Value::from("foo"));
 
         let result = get_task_type(&task);
-        let expected = Err(TaskErr {
-            message: String::from("Task data is Malformed"),
-            task: Some(task.clone()),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task data is Malformed"),
+            None,
+            Some(task.clone()),
+        ));
         assert_eq!(expected, result)
     }
 }

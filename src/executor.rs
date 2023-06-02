@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use thirtyfour::{Capabilities, DesiredCapabilities, ChromeCapabilities, WebDriver};
 
-use crate::tasks::{to_task, Tasks, TaskOk, TaskResult, TaskErr};
+use crate::{tasks::{to_task, Tasks, TaskResult}, structs::{task_ok::TaskOk, task_err::TaskErr}};
 use std::{path::PathBuf, str::FromStr, fs, collections::HashMap};
 
 pub type ExecuteResult = std::result::Result<(WebDriverSession, TaskOk), (WebDriverSession, TaskErr)>;

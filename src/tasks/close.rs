@@ -19,11 +19,11 @@ impl Task for Close {
     fn new(task: &HashMap<String, Value>) -> TaskResult<Close> {
         let name = get_task_name(task)?;
         if !task.contains_key(TASK_TYPE) {
-            return Err(TaskErr {
-                message: String::from("Malformed Task"),
-                task: Some(task.clone()),
-                task_type: Some(TaskTypes::CLOSE),
-            });
+            return Err(TaskErr::new(
+                String::from("Malformed Task"),
+                Some(TaskTypes::CLOSE),
+                Some(task.clone()),
+            ));
         }
         Ok(Close {
             name,
@@ -49,18 +49,18 @@ impl Task for Close {
                         name,
                         task_type: TaskTypes::CLOSE,
                         duration: start.elapsed().as_secs(),
-                        result: None
+                        result: None,
                     },
                 ));
             }
 
             Err(e) => Err((
                 web_driver_session,
-                TaskErr {
-                    message: format!("Unable to close webdriver: {}", e),
-                    task: None,
-                    task_type: Some(TaskTypes::CLOSE),
-                },
+                TaskErr::new(
+                    format!("Unable to close webdriver: {}", e),
+                    Some(TaskTypes::CLOSE),
+                    None,
+                ),
             )),
         }
     }
@@ -74,11 +74,11 @@ mod tests {
     fn test_empty_task() {
         let close = HashMap::new();
         let result = Close::new(&close);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(close),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(close),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -90,11 +90,11 @@ mod tests {
 
         let close = serde_yaml::from_str(yaml).unwrap();
         let result = Close::new(&close);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(close),
-            task_type: Some(TaskTypes::CLOSE),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            Some(TaskTypes::CLOSE),
+            Some(close),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -107,11 +107,11 @@ mod tests {
         let close = serde_yaml::from_str(yaml).unwrap();
 
         let result = Close::new(&close);
-        let expected = Err(TaskErr {
-            message: String::from("Task name can`t be empty"),
-            task: Some(close),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task name can`t be empty"),
+            None,
+            Some(close),
+        ));
         assert_eq!(expected, result)
     }
 

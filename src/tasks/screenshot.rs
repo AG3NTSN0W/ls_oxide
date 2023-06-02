@@ -7,7 +7,8 @@ use thirtyfour::{prelude::WebDriverError, By};
 
 use crate::{
     element::Element,
-    executor::{ExecuteResult, WebDriverSession}, variables::resolve_variables,
+    executor::{ExecuteResult, WebDriverSession},
+    variables::resolve_variables,
 };
 
 use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
@@ -30,11 +31,11 @@ impl Task for Screenshot {
         let path = match get_path(screenshot) {
             Ok(p) => p,
             Err(message) => {
-                return Err(TaskErr {
+                return Err(TaskErr::new(
                     message,
-                    task: Some(task.clone()),
-                    task_type: Some(TaskTypes::SCREENSHOT),
-                })
+                    Some(TaskTypes::SCREENSHOT),
+                    Some(task.clone()),
+                ))
             }
         };
 
@@ -61,11 +62,7 @@ impl Task for Screenshot {
                 Err(e) => {
                     return Err((
                         web_driver_session,
-                        TaskErr {
-                            message: format!("{}", e),
-                            task: None,
-                            task_type: Some(TaskTypes::SCREENSHOT),
-                        },
+                        TaskErr::new(format!("{}", e), Some(TaskTypes::SCREENSHOT), None),
                     ));
                 }
             };
@@ -101,16 +98,14 @@ fn screenshot_result(
                 result: None,
             },
         )),
-        Err(e) => {
-            Err((
-                web_driver_session,
-                TaskErr {
-                    message: format!("Unable to take a screenshot: {:?}", e),
-                    task: None,
-                    task_type: Some(TaskTypes::SCREENSHOT),
-                },
-            ))
-        }
+        Err(e) => Err((
+            web_driver_session,
+            TaskErr::new(
+                format!("Unable to take a screenshot: {:?}", e),
+                Some(TaskTypes::SCREENSHOT),
+                None,
+            ),
+        )),
     }
 }
 
@@ -138,11 +133,11 @@ mod tests {
     fn test_empty_task() {
         let screenshot = HashMap::new();
         let result = Screenshot::new(&screenshot);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(screenshot),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(screenshot),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -154,11 +149,11 @@ mod tests {
 
         let screenshot = serde_yaml::from_str(yaml).unwrap();
         let result = Screenshot::new(&screenshot);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(screenshot),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(screenshot),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -171,11 +166,11 @@ mod tests {
         let screenshot = serde_yaml::from_str(yaml).unwrap();
 
         let result = Screenshot::new(&screenshot);
-        let expected = Err(TaskErr {
-            message: String::from("Task name can`t be empty"),
-            task: Some(screenshot),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task name can`t be empty"),
+            None,
+            Some(screenshot),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -231,11 +226,11 @@ mod tests {
 
         let screenshot = serde_yaml::from_str(yaml).unwrap();
         let result = Screenshot::new(&screenshot);
-        let expected = Err(TaskErr {
-            message: String::from("Task data is Malformed"),
-            task: Some(screenshot),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task data is Malformed"),
+            None,
+            Some(screenshot),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -251,11 +246,11 @@ mod tests {
 
         let screenshot = serde_yaml::from_str(yaml).unwrap();
         let result = Screenshot::new(&screenshot);
-        let expected = Err(TaskErr {
-            message: String::from("path field is not a string"),
-            task: Some(screenshot),
-            task_type: Some(TaskTypes::SCREENSHOT),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("path field is not a string"),
+            Some(TaskTypes::SCREENSHOT),
+            Some(screenshot),
+        ));
         assert_eq!(expected, result)
     }
 

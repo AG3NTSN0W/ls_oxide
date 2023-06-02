@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use ls_oxide::{
     executor::Executor,
-    tasks::{TaskData, TaskErr, TaskOk, ValidationReultType},
+    tasks::{TaskData, ValidationReultType}, structs::{task_ok::TaskOk, task_err::TaskErr},
 };
 
 pub fn resource_path_tmp() -> PathBuf {
@@ -24,7 +24,7 @@ pub async fn get_executor_ok(file_name: &str) -> Vec<TaskOk> {
         }
     };
 
-    let result = match executor.execute().await {
+    let result = match executor.execute(None).await {
         Ok(result) => result,
         Err(err) => {
             cleanup(file_name);

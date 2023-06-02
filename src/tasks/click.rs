@@ -28,11 +28,11 @@ impl Task for Click {
         let element = match Element::new(click) {
             Ok(element) => element,
             Err(err) => {
-                return Err(TaskErr {
-                    message: err,
-                    task: Some(task.clone()),
-                    task_type: Some(TaskTypes::CLICK),
-                })
+                return Err(TaskErr::new(
+                    err,
+                    Some(TaskTypes::CLICK),
+                    Some(task.clone()),
+                ))
             }
         };
 
@@ -57,11 +57,7 @@ impl Task for Click {
             Err(e) => {
                 return Err((
                     web_driver_session,
-                    TaskErr {
-                        message: format!("{}", e),
-                        task: None,
-                        task_type: Some(TaskTypes::CLICK),
-                    },
+                    TaskErr::new(format!("{}", e), Some(TaskTypes::CLICK), None),
                 ));
             }
         };
@@ -82,11 +78,7 @@ impl Task for Click {
             Err(e) => {
                 return Err((
                     web_driver_session,
-                    TaskErr {
-                        message: format!("{}", e),
-                        task: None,
-                        task_type: Some(TaskTypes::CLICK),
-                    },
+                    TaskErr::new(format!("{}", e), Some(TaskTypes::CLICK), None),
                 ));
             }
         }
@@ -103,11 +95,11 @@ mod tests {
     fn test_empty_task() {
         let click_map_empty = HashMap::new();
         let result = Click::new(&click_map_empty);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(click_map_empty),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(click_map_empty),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -120,11 +112,11 @@ mod tests {
 
         let click = serde_yaml::from_str(yaml).unwrap();
         let result = Click::new(&click);
-        let expected = Err(TaskErr {
-            message: String::from("Task data is Malformed"),
-            task: Some(click),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task data is Malformed"),
+            None,
+            Some(click),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -136,11 +128,11 @@ mod tests {
 
         let click = serde_yaml::from_str(yaml).unwrap();
         let result = Click::new(&click);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(click),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(click),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -156,11 +148,11 @@ mod tests {
         let click = serde_yaml::from_str(yaml).unwrap();
 
         let result = Click::new(&click);
-        let expected = Err(TaskErr {
-            message: String::from("Task name can`t be empty"),
-            task: Some(click),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task name can`t be empty"),
+            None,
+            Some(click),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -176,11 +168,12 @@ mod tests {
         let click = serde_yaml::from_str(yaml).unwrap();
 
         let result = Click::new(&click);
-        let expected = Err(TaskErr {
-            message: String::from("Task name is not a string"),
-            task: Some(click),
-            task_type: None,
-        });
+
+        let expected = Err(TaskErr::new(
+            String::from("Task name is not a string"),
+            None,
+            Some(click),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -196,11 +189,11 @@ mod tests {
         let click = serde_yaml::from_str(yaml).unwrap();
 
         let result = Click::new(&click);
-        let expected = Err(TaskErr {
-            message: String::from("Unknow Element Type: \"foo\""),
-            task: Some(click),
-            task_type: Some(TaskTypes::CLICK),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Unknow Element Type: \"foo\""),
+            Some(TaskTypes::CLICK),
+            Some(click),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -215,11 +208,13 @@ mod tests {
 
         let click = serde_yaml::from_str(yaml).unwrap();
         let result = Click::new(&click);
-        let expected = Err(TaskErr {
-            message: String::from("Element: Value is not a string"),
-            task: Some(click),
-            task_type: Some(TaskTypes::CLICK),
-        });
+
+        let expected = Err(TaskErr::new(
+            String::from("Element: Value is not a string"),
+            Some(TaskTypes::CLICK),
+            Some(click),
+        ));
+
         assert_eq!(expected, result)
     }
 
@@ -233,11 +228,11 @@ mod tests {
 
         let click = serde_yaml::from_str(yaml).unwrap();
         let result = Click::new(&click);
-        let expected = Err(TaskErr {
-            message: String::from("No element found"),
-            task: Some(click),
-            task_type: Some(TaskTypes::CLICK),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("No element found"),
+            Some(TaskTypes::CLICK),
+            Some(click),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -260,6 +255,7 @@ mod tests {
                 value: "//*[@id=\"search-form\"]/fieldset/button".to_owned(),
             },
         });
+
         assert_eq!(expected, result)
     }
 

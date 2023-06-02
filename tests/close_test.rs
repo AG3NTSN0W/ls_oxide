@@ -1,10 +1,10 @@
 mod common;
 
-use ls_oxide::tasks::{TaskErr, TaskTypes};
+
 
 mod close {
     use serial_test::serial;
-
+    use ls_oxide::{tasks::TaskTypes, structs::task_err::TaskErr};
     use super::*;
 
     #[tokio::test]

@@ -1,10 +1,12 @@
 mod common;
 
-use ls_oxide::tasks::{TaskErr, TaskTypes};
+
 
 mod click {
 
+    use ls_oxide::structs::task_err::TaskErr;
     use serial_test::serial;
+    use ls_oxide::tasks::{TaskTypes};
 
     use super::*;
 

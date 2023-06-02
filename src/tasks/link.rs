@@ -3,11 +3,12 @@ use serde_yaml::Value;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use crate::{executor::{ExecuteResult, WebDriverSession}, variables::resolve_variables};
-
-use super::{
-    get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes,
+use crate::{
+    executor::{ExecuteResult, WebDriverSession},
+    variables::resolve_variables,
 };
+
+use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
 
 const TASK_TYPE: &str = "link";
 
@@ -49,17 +50,17 @@ impl Task for Link {
                     name,
                     task_type: TaskTypes::LINK,
                     duration: start.elapsed().as_secs(),
-                    result: None
+                    result: None,
                 },
             )),
             Err(_) => {
                 return Err((
                     web_driver_session,
-                    TaskErr {
-                        message: "Unable to open link".to_string(),
-                        task: None,
-                        task_type: Some(TaskTypes::LINK),
-                    },
+                    TaskErr::new(
+                        "Unable to open link".to_string(),
+                        Some(TaskTypes::LINK),
+                        None,
+                    ),
                 ))
             }
         }
@@ -71,30 +72,30 @@ fn get_url(task: &HashMap<String, Value>) -> TaskResult<String> {
     let url = match link.get("url") {
         Some(url) => url,
         None => {
-            return Err(TaskErr {
-                message: "url field not found".to_string(),
-                task: Some(task.clone()),
-                task_type: Some(TaskTypes::LINK),
-            })
+            return Err(TaskErr::new(
+                "url field not found".to_string(),
+                Some(TaskTypes::LINK),
+                Some(task.clone()),
+            ))
         }
     };
     let url = match url.as_str() {
         Some(url) => String::from(url),
         None => {
-            return Err(TaskErr {
-                message: "Url is not a string".to_string(),
-                task: Some(task.clone()),
-                task_type: Some(TaskTypes::LINK),
-            })
+            return Err(TaskErr::new(
+                "Url is not a string".to_string(),
+                Some(TaskTypes::LINK),
+                Some(task.clone()),
+            ))
         }
     };
 
     if url.is_empty() {
-        return Err(TaskErr {
-            message: "Url is empty".to_string(),
-            task: Some(task.clone()),
-            task_type: Some(TaskTypes::LINK),
-        });
+        return Err(TaskErr::new(
+            "Url is empty".to_string(),
+            Some(TaskTypes::LINK),
+            Some(task.clone()),
+        ));
     }
 
     Ok(url)
@@ -108,11 +109,11 @@ mod tests {
     fn test_empty_task() {
         let link = HashMap::new();
         let result = Link::new(&link);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(link),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(link),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -124,11 +125,11 @@ mod tests {
 
         let link = serde_yaml::from_str(yaml).unwrap();
         let result = Link::new(&link);
-        let expected = Err(TaskErr {
-            message: String::from("Malformed Task"),
-            task: Some(link),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Malformed Task"),
+            None,
+            Some(link),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -142,11 +143,11 @@ mod tests {
 
         let link = serde_yaml::from_str(yaml).unwrap();
         let result = Link::new(&link);
-        let expected = Err(TaskErr {
-            message: String::from("url field not found"),
-            task: Some(link),
-            task_type: Some(TaskTypes::LINK),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("url field not found"),
+            Some(TaskTypes::LINK),
+            Some(link),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -159,11 +160,11 @@ mod tests {
 
         let link = serde_yaml::from_str(yaml).unwrap();
         let result = Link::new(&link);
-        let expected = Err(TaskErr {
-            message: String::from("Task data is Malformed"),
-            task: Some(link),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task data is Malformed"),
+            None,
+            Some(link),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -177,11 +178,11 @@ mod tests {
 
         let link = serde_yaml::from_str(yaml).unwrap();
         let result = Link::new(&link);
-        let expected = Err(TaskErr {
-            message: String::from("Url is empty"),
-            task: Some(link),
-            task_type: Some(TaskTypes::LINK),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Url is empty"),
+            Some(TaskTypes::LINK),
+            Some(link),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -195,11 +196,11 @@ mod tests {
 
         let link = serde_yaml::from_str(yaml).unwrap();
         let result = Link::new(&link);
-        let expected = Err(TaskErr {
-            message: String::from("Url is not a string"),
-            task: Some(link),
-            task_type: Some(TaskTypes::LINK),
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Url is not a string"),
+            Some(TaskTypes::LINK),
+            Some(link),
+        ));
         assert_eq!(expected, result)
     }
 
@@ -213,11 +214,11 @@ mod tests {
         let link = serde_yaml::from_str(yaml).unwrap();
 
         let result = Link::new(&link);
-        let expected = Err(TaskErr {
-            message: String::from("Task name can`t be empty"),
-            task: Some(link),
-            task_type: None,
-        });
+        let expected = Err(TaskErr::new(
+            String::from("Task name can`t be empty"),
+            None,
+            Some(link),
+        ));
         assert_eq!(expected, result)
     }
 

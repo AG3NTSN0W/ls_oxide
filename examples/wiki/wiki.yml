@@ -22,6 +22,9 @@ tasks:
       element:
         xPath: '//*[@id="search-form"]/fieldset/button'
 
+  - name: "wait 5 sec"
+    wait: 5000
+
   - name: "Validate Title"
     validate:
       element:
