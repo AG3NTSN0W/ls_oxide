@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use ls_oxide::{
     executor::Executor,
-    tasks::{TaskData, ValidationReultType}, structs::{task_ok::TaskOk, task_err::TaskErr},
+    structs::{task_ok::TaskOk, task_err::TaskErr, task_data::TaskData, validation_result::ValidationReultType},
 };
 
 pub fn resource_path_tmp() -> PathBuf {

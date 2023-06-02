@@ -8,12 +8,11 @@ use thirtyfour::WebElement;
 use crate::{
     element::Element,
     executor::{ExecuteResult, WebDriverSession},
-    variables::resolve_variables,
+    variables::resolve_variables, structs::validation_result::{ValidationReultType, ValidationResult},
 };
 
 use super::{
     get_task, get_task_name, to_hash, Task, TaskErr, TaskOk, TaskResult, TaskTypes,
-    ValidationResult, ValidationReultType,
 };
 
 const TASK_TYPE: &str = "validate";

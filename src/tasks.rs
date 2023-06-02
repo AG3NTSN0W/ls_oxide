@@ -8,10 +8,8 @@ mod validate;
 mod wait;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
-use crate::structs::task_err::TaskErr;
-use crate::structs::task_ok::TaskOk;
+use crate::structs::{task_data::TaskData, task_err::TaskErr, task_ok::TaskOk};
 
-use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -39,12 +37,6 @@ pub trait Task {
     fn new(task: &HashMap<String, Value>) -> TaskResult<Self>
     where
         Self: Sized;
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
-pub struct TaskData {
-    pub meta_data: HashMap<String, Value>,
-    pub tasks: Vec<HashMap<String, Value>>,
 }
 
 #[derive(Debug, Clone, Default, Copy, PartialEq, Eq)]
@@ -83,18 +75,6 @@ impl FromStr for TaskTypes {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ValidationReultType {
-    SUCCESS,
-    FAILED,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]
-pub struct ValidationResult {
-    pub validation: ValidationReultType,
-    pub message: String,
-}
 
 pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
     let mut tasks: Vec<Box<dyn Task>> = vec![];
@@ -188,13 +168,6 @@ fn validate_first_task(task_data: &TaskData) -> TaskResult<()> {
             .filter(|element| !element.contains(NAME))
             .collect::<Vec<&String>>();
 
-        // if key.len() < 1 {
-        //     return Err(format!(
-        //         "Task Malformed:\n{:#?}",
-        //         task_data.tasks.first().unwrap()
-        //     ));
-        // }
-
         let key = TaskTypes::from_str(key[0])?;
         if key == TaskTypes::LINK {
             return Ok(());
@@ -220,13 +193,6 @@ fn is_last_task_close(task_data: &TaskData) -> TaskResult<bool> {
             .keys()
             .filter(|element| !element.contains(NAME))
             .collect::<Vec<&String>>();
-
-        // if key.len() < 1 {
-        //     return Err(format!(
-        //         "Task Malformed:\n{:#?}",
-        //         task_data.tasks.last().unwrap()
-        //     ));
-        // }
 
         let key = TaskTypes::from_str(key[0])?;
         if key == TaskTypes::CLOSE {

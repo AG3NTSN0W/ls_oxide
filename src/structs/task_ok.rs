@@ -1,6 +1,8 @@
 use std::fmt;
 
-use crate::tasks::{TaskTypes, ValidationResult};
+use crate::tasks::{TaskTypes};
+
+use super::validation_result::ValidationResult;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskOk {
