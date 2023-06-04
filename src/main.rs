@@ -1,6 +1,5 @@
-use std::path::PathBuf;
-use std::process;
 use ls_oxide::executor::Executor;
+use std::path::PathBuf;
 
 use clap::Parser;
 use std::error::Error;
@@ -39,20 +38,10 @@ where
 
 #[tokio::main]
 async fn main() {
-    
-    let args = Args::parse();
+    let args: Args = Args::parse();
 
-    let mut executor = match Executor::new(args.task_path, args.config_path) {
-        Ok(exec) => exec,
-        Err(e) => {
-            println!("{}", e);
-            process::exit(1);
-        }
-    };
-
-    match executor.execute_filter(args.vars).await {
+    match Executor::run(args.task_path, args.config_path, args.vars).await {
         Ok(r) => println!("{:?}", r),
-        Err(x) => println!("{}", x)
+        Err(x) => println!("{}", x),
     };
-
 }
