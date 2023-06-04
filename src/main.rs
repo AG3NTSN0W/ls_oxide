@@ -50,9 +50,9 @@ async fn main() {
         }
     };
 
-
-    match executor.execute(args.vars).await {
-        Ok(x) => println!("{:#?}", x),
+    match executor.execute_filter(args.vars).await {
+        Ok(r) => println!("{:?}", r),
         Err(x) => println!("{}", x)
     };
+
 }

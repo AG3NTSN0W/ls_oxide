@@ -2,14 +2,15 @@ use std::fmt;
 
 use crate::tasks::{TaskTypes};
 
-use super::validation_result::ValidationResult;
+use super::task_results::TaskResults;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+
+#[derive(Debug, Clone)]
 pub struct TaskOk {
     pub name: String,
     pub task_type: TaskTypes,
     pub duration: u64,
-    pub result: Option<Vec<ValidationResult>>,
+    pub result: Option<Vec<TaskResults>>,
 }
 
 impl fmt::Display for TaskOk {

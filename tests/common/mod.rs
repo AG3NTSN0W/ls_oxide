@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use ls_oxide::{
     executor::Executor,
-    structs::{task_ok::TaskOk, task_err::TaskErr, task_data::TaskData, validation_result::ValidationReultType},
+    structs::{task_ok::TaskOk, task_err::TaskErr, task_data::TaskData, task_results::{ResultsType, ValidationResult, ValidationResultType}},
 };
 
 pub fn resource_path_tmp() -> PathBuf {
@@ -85,7 +85,12 @@ pub fn cleanup(file_name: &str) {
 pub fn validate_first_result(task: &TaskOk, message: &str) {
     let results = task.result.clone().unwrap();
     let first_result = results.get(0).unwrap();
-    assert_eq!(ValidationReultType::SUCCESS, first_result.validation);
+
+    assert_eq!(first_result.result_type, ResultsType::VALIDATE);
+
+    let first_result = ValidationResult::from(first_result.clone());
+
+    assert_eq!(ValidationResultType::SUCCESS, first_result.validation);
     assert_eq!(message, first_result.message);
 }
 
@@ -93,7 +98,8 @@ pub fn validate_first_result(task: &TaskOk, message: &str) {
 pub fn validation_results_success(task: &TaskOk) {
     let results = task.result.clone().unwrap();
     for result in results {
-        assert_eq!(ValidationReultType::SUCCESS, result.validation);
+        let first_result = ValidationResult::from(result.clone());
+        assert_eq!(ValidationResultType::SUCCESS, first_result.validation);
     }
 }
 
