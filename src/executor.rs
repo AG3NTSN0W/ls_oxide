@@ -12,7 +12,6 @@ pub type ExecuteResult =
 
 pub struct Executor {
     pub task_type: ResultsType,
-    pub results: Vec<TaskOk>,
     pub tasks: Tasks,
     pub config_path: Option<PathBuf>,
 }
@@ -22,7 +21,6 @@ impl Executor {
         let (tasks_to_execut, task_type) = to_task(task_path)?;
 
         Ok(Executor {
-            results: vec![],
             tasks: tasks_to_execut,
             config_path,
             task_type,
@@ -30,9 +28,10 @@ impl Executor {
     }
 
     pub async fn execute(
-        &mut self,
+        self,
         vars: Option<Vec<(String, String)>>,
-    ) -> Result<&Vec<TaskOk>, String> {
+    ) -> Result<Vec<TaskOk>, String> {
+        let mut results: Vec<TaskOk> = vec![];
         let mut web_driver: WebDriverSession = WebDriverSession::new(&self.config_path).await?;
 
         if let Some(vars) = vars {
@@ -45,7 +44,7 @@ impl Executor {
             match execute {
                 Ok((driver, task_ok)) => {
                     web_driver = driver;
-                    self.results.push(task_ok);
+                    results.push(task_ok);
                 }
                 Err((web_driver, e)) => {
                     web_driver.driver.quit().await.unwrap();
@@ -55,11 +54,11 @@ impl Executor {
             }
         }
 
-        Ok(&self.results)
+        Ok(results)
     }
 
     pub async fn execute_filter(
-        &mut self,
+        self,
         vars: Option<Vec<(String, String)>>,
     ) -> Result<Vec<HashMap<String, String>>, String> {
         let task_type = self.task_type.clone();
@@ -68,7 +67,11 @@ impl Executor {
             Err(err) => return Err(err),
         };
 
-        Ok(Executor::filter_results(task_type, results.to_vec()))
+        match task_type {
+            ResultsType::VALIDATE => Ok(filter_validate_results(results.to_vec())),
+            ResultsType::TASk => Ok(filter_tasks_results(results.to_vec())),
+            _ => Ok(vec![]),
+        }
     }
 
     pub async fn run(
@@ -76,7 +79,7 @@ impl Executor {
         config_path: Option<PathBuf>,
         vars: Option<Vec<(String, String)>>,
     ) -> Result<Vec<HashMap<String, String>>, String> {
-        let mut executor = match Executor::new(task_path, config_path) {
+        let executor = match Executor::new(task_path, config_path) {
             Ok(data) => data,
             Err(e) => return Err(e.to_string()),
         };
@@ -86,41 +89,35 @@ impl Executor {
             Err(e) => Err(e),
         }
     }
+}
 
-    fn filter_results(
-        task_type: ResultsType,
-        results: Vec<TaskOk>,
-    ) -> Vec<HashMap<String, String>> {
-        let mut filtered_results: Vec<HashMap<String, String>> = vec![];
-
-        if task_type == ResultsType::TASk {
-            for task_results in results {
-                let mut results_map: HashMap<String, String> = HashMap::new();
-                results_map.insert("name".to_string(), task_results.name);
-                results_map.insert("duration".to_string(), task_results.duration.to_string());
-                results_map.insert("taskType".to_string(), task_results.task_type.to_string());
-                filtered_results.push(results_map);
-            }
-
-            return filtered_results;
-        }
-
-        if task_type == ResultsType::VALIDATE {
-            for task_results in results {
-                if let Some(results) = task_results.result {
-                    for result in results {
-                        if result.result_type != ResultsType::VALIDATE {
-                            continue;
-                        }
-                        filtered_results.push(result.results);
-                    }
+fn filter_validate_results(results: Vec<TaskOk>) -> Vec<HashMap<String, String>> {
+    let mut filtered_results: Vec<HashMap<String, String>> = vec![];
+    for task_results in results {
+        if let Some(results) = task_results.result {
+            for result in results {
+                if result.result_type != ResultsType::VALIDATE {
+                    continue;
                 }
+                filtered_results.push(result.results);
             }
-            return filtered_results;
         }
-
-        vec![]
     }
+
+    filtered_results
+}
+
+fn filter_tasks_results(results: Vec<TaskOk>) -> Vec<HashMap<String, String>> {
+    let mut filtered_results: Vec<HashMap<String, String>> = vec![];
+    for task_results in results {
+        let mut results_map: HashMap<String, String> = HashMap::new();
+        results_map.insert("name".to_string(), task_results.name);
+        results_map.insert("duration".to_string(), task_results.duration.to_string());
+        results_map.insert("taskType".to_string(), task_results.task_type.to_string());
+        filtered_results.push(results_map);
+    }
+
+    filtered_results
 }
 
 #[derive(Clone)]
