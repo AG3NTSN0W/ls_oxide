@@ -4,9 +4,9 @@ use async_trait::async_trait;
 use serde_yaml::Value;
 use std::time::Instant;
 
-use crate::executor::{ExecuteResult, WebDriverSession};
+use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::task_ok::TaskOk};
 
-use super::{get_task, get_task_name, to_hash, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
+use super::{get_task, get_task_name, to_hash, Task, TaskErr, TaskResult, TaskTypes};
 
 const TASK_TYPE: &str = "set_vars";
 

@@ -5,14 +5,10 @@ use serde_yaml::{Mapping, Value};
 use std::time::Instant;
 use thirtyfour::WebElement;
 
-use crate::{
-    element::Element,
-    executor::{ExecuteResult, WebDriverSession},
-    variables::resolve_variables, structs::validation_result::{ValidationReultType, ValidationResult},
-};
+use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::{task_ok::TaskOk, validation_result::{ValidationResult, ValidationReultType}}, variables::resolve_variables, element::Element};
 
 use super::{
-    get_task, get_task_name, to_hash, Task, TaskErr, TaskOk, TaskResult, TaskTypes,
+    get_task, get_task_name, to_hash, Task, TaskErr, TaskResult, TaskTypes,
 };
 
 const TASK_TYPE: &str = "validate";

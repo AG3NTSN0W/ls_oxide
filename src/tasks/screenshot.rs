@@ -5,13 +5,9 @@ use serde_yaml::{Mapping, Value};
 use std::time::Instant;
 use thirtyfour::{prelude::WebDriverError, By};
 
-use crate::{
-    element::Element,
-    executor::{ExecuteResult, WebDriverSession},
-    variables::resolve_variables,
-};
+use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::task_ok::TaskOk, variables::resolve_variables, element::Element};
 
-use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
+use super::{get_task, get_task_name, Task, TaskErr, TaskResult, TaskTypes};
 
 const TASK_TYPE: &str = "screenshot";
 

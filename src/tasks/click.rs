@@ -4,10 +4,10 @@ use std::collections::HashMap;
 use std::time::Instant;
 use thirtyfour::By;
 
-use super::{get_task, get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
+use super::{get_task, get_task_name, Task, TaskErr, TaskResult, TaskTypes};
 use crate::{
-    element::Element,
-    executor::{ExecuteResult, WebDriverSession},
+    element::Element, executor::ExecuteResult, structs::task_ok::TaskOk,
+    web_driver_session::WebDriverSession,
 };
 
 const TASK_TYPE: &str = "click";

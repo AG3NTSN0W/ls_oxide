@@ -7,8 +7,9 @@ mod set_variable;
 mod validate;
 mod wait;
 
-use crate::executor::{ExecuteResult, WebDriverSession};
-use crate::structs::{task_data::TaskData, task_err::TaskErr, task_ok::TaskOk};
+use crate::executor::ExecuteResult;
+use crate::structs::{task_data::TaskData, task_err::TaskErr};
+use crate::web_driver_session::WebDriverSession;
 
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;

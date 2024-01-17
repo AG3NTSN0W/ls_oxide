@@ -3,9 +3,9 @@ use serde_yaml::Value;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use crate::executor::{ExecuteResult, WebDriverSession};
+use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::task_ok::TaskOk};
 
-use super::{get_task_name, Task, TaskErr, TaskOk, TaskResult, TaskTypes};
+use super::{get_task_name, Task, TaskErr, TaskResult, TaskTypes};
 const TASK_TYPE: &str = "close";
 
 #[derive(PartialEq, Eq, Debug)]
