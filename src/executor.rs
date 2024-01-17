@@ -58,39 +58,17 @@ impl Executor {
         Ok(&self.results)
     }
 
-    pub async fn execute_filter(
-        &mut self,
-        vars: Option<Vec<(String, String)>>,
-    ) -> Result<Vec<HashMap<String, String>>, String> {
+    pub async fn execute_filter(&mut self, vars: Option<Vec<(String, String)>>) -> Result<Vec<HashMap<String, String>>, String> {
         let task_type = self.task_type.clone();
         let results = match self.execute(vars).await {
             Ok(r) => r,
-            Err(err) => return Err(err),
+            Err(err) => return Err(err)
         };
 
         Ok(Executor::filter_results(task_type, results.to_vec()))
     }
 
-    pub async fn run(
-        task_path: PathBuf,
-        config_path: Option<PathBuf>,
-        vars: Option<Vec<(String, String)>>,
-    ) -> Result<Vec<HashMap<String, String>>, String> {
-        let mut executor = match Executor::new(task_path, config_path) {
-            Ok(data) => data,
-            Err(e) => return Err(e.to_string()),
-        };
-
-        match executor.execute_filter(vars).await {
-            Ok(result) => Ok(result),
-            Err(e) => Err(e),
-        }
-    }
-
-    fn filter_results(
-        task_type: ResultsType,
-        results: Vec<TaskOk>,
-    ) -> Vec<HashMap<String, String>> {
+    fn filter_results(task_type: ResultsType, results: Vec<TaskOk>) -> Vec<HashMap<String, String>> {
         let mut filtered_results: Vec<HashMap<String, String>> = vec![];
 
         if task_type == ResultsType::TASk {
