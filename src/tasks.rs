@@ -6,7 +6,6 @@ mod send_key;
 mod set_variable;
 mod validate;
 mod wait;
-mod read;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
 use crate::structs::task_results::ResultsType;
@@ -21,7 +20,6 @@ use std::{fs, path::PathBuf};
 use self::click::Click;
 use self::close::Close;
 use self::link::Link;
-use self::read::Read;
 use self::screenshot::Screenshot;
 use self::send_key::SendKey;
 use self::set_variable::SetVars;
@@ -55,7 +53,6 @@ pub enum TaskTypes {
     SCREENSHOT,
     VALIDATE,
     SETVARIABLE,
-    READ,
     #[default]
     NONE,
 }
@@ -73,7 +70,6 @@ impl FromStr for TaskTypes {
             "screenshot" => Ok(TaskTypes::SCREENSHOT),
             "validate" => Ok(TaskTypes::VALIDATE),
             "set_vars" => Ok(TaskTypes::SETVARIABLE),
-            "read" => Ok(TaskTypes::READ),
             _ => Err(TaskErr::new(
                 format!("Unknow Task Type: {:#?}", input),
                 None,
@@ -94,7 +90,6 @@ impl fmt::Display for TaskTypes {
             TaskTypes::SCREENSHOT => write!(f, "screenshot"),
             TaskTypes::VALIDATE => write!(f, "validate"),
             TaskTypes::SETVARIABLE => write!(f, "set_vars"),
-            TaskTypes::READ => write!(f, "read"),
             TaskTypes::NONE => write!(f, "none"),
         }
     }
@@ -133,7 +128,6 @@ fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>>
         TaskTypes::SCREENSHOT => Box::new(<Screenshot as Task>::new(task_data)?),
         TaskTypes::VALIDATE => Box::new(<Validate as Task>::new(task_data)?),
         TaskTypes::SETVARIABLE => Box::new(<SetVars as Task>::new(task_data)?),
-        TaskTypes::READ => Box::new(<Read as Task>::new(task_data)?),
         _ => {
             return Err(TaskErr::new(
                 "Invalid Task Type".to_string(),
@@ -587,28 +581,4 @@ tasks:
         ));
         assert_eq!(expected, result)
     }
-}
-
-
-#[macro_export]
-macro_rules! assert_task_ok {
-    ($yaml:expr, $task:ident, $expected:expr) => {{
-
-        let data: HashMap<String, Value>  = serde_yaml::from_str($yaml).unwrap();
-        let result = $task::new(&data).unwrap();
-
-        assert_eq!($expected, result)
-    }};
-}
-
-
-#[macro_export]
-macro_rules! assert_task_err {
-    ($yaml:expr, $task:ident, $expected:expr) => {{
-
-        let data: HashMap<String, Value>  = serde_yaml::from_str($yaml).unwrap();
-        let result = $task::new(&data);
-
-        assert_eq!($expected, result)
-    }};
 }

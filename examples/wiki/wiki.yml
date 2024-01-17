@@ -1,6 +1,6 @@
 ---
 meta_data: {}
-read:
+tasks:
   - name: "Open wikipedia"
     link:
       url: "https://wikipedia.org"
