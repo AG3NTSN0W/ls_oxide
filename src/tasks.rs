@@ -8,12 +8,10 @@ mod validate;
 mod wait;
 
 use crate::executor::{ExecuteResult, WebDriverSession};
-use crate::structs::task_results::ResultsType;
 use crate::structs::{task_data::TaskData, task_err::TaskErr, task_ok::TaskOk};
 
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use std::fmt;
 use std::str::FromStr;
 use std::{fs, path::PathBuf};
 
@@ -30,10 +28,8 @@ use core::fmt::Debug;
 
 pub type Tasks = Vec<Box<dyn Task>>;
 pub type TaskResult<T> = std::result::Result<T, TaskErr>;
-pub type TaskToExecute = Vec<HashMap<String, Value>>;
 
 const NAME: &str = "name";
-
 
 #[async_trait]
 pub trait Task {
@@ -79,29 +75,11 @@ impl FromStr for TaskTypes {
     }
 }
 
-impl fmt::Display for TaskTypes {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            TaskTypes::CLICK => write!(f, "click"),
-            TaskTypes::SENDKEY => write!(f, "send_key"),
-            TaskTypes::LINK => write!(f, "link"),
-            TaskTypes::CLOSE => write!(f, "close"),
-            TaskTypes::WAIT => write!(f, "wait"),
-            TaskTypes::SCREENSHOT => write!(f, "screenshot"),
-            TaskTypes::VALIDATE => write!(f, "validate"),
-            TaskTypes::SETVARIABLE => write!(f, "set_vars"),
-            TaskTypes::NONE => write!(f, "none"),
-        }
-    }
-}
 
-
-pub fn to_task(path: PathBuf) -> TaskResult<(Tasks, ResultsType)> {
-
-    let (task_data, task_type) = get_task_data(path)?;
-
+pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
     let mut tasks: Vec<Box<dyn Task>> = vec![];
-    for task_data in task_data.iter() {
+    let task_data = get_task_data(path)?;
+    for task_data in task_data.tasks.iter() {
         tasks.push(data_to_task(task_data)?);
     }
     validate_first_task(&task_data)?;
@@ -114,7 +92,7 @@ pub fn to_task(path: PathBuf) -> TaskResult<(Tasks, ResultsType)> {
         close.insert(String::from("close"), Value::Bool(true));
         tasks.push(data_to_task(&close)?);
     }
-    Ok((tasks, task_type))
+    Ok(tasks)
 }
 
 fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>> {
@@ -139,7 +117,7 @@ fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>>
     Ok(task)
 }
 
-pub fn get_task_data(path: PathBuf) -> TaskResult<(TaskToExecute, ResultsType)> {
+fn get_task_data(path: PathBuf) -> TaskResult<TaskData> {
     let yaml = match fs::read_to_string(path) {
         Ok(data) => data,
         Err(_) => {
@@ -150,29 +128,14 @@ pub fn get_task_data(path: PathBuf) -> TaskResult<(TaskToExecute, ResultsType)> 
             ))
         }
     };
-
-    let task_data: TaskData = match serde_yaml::from_str(&yaml) {
-        Ok(tasks) => tasks,
-        Err(_) => return  Err(TaskErr::new(
+    match serde_yaml::from_str(&yaml) {
+        Ok(data) => Ok(data),
+        Err(_) => Err(TaskErr::new(
             String::from("Unable to deserialize file"),
             None,
             None,
         )),
-    };
-
-    if let Some(data) = task_data.tasks {
-        return Ok((data, ResultsType::TASk));
-    } 
-
-    if let Some(data) = task_data.validate {
-        return Ok((data, ResultsType::VALIDATE));
     }
-
-   Err(TaskErr::new(
-        String::from("Unable to deserialize file"),
-        None,
-        None,
-    ))
 }
 
 fn get_task_type(task: &HashMap<String, Value>) -> TaskResult<TaskTypes> {
@@ -184,7 +147,7 @@ fn get_task_type(task: &HashMap<String, Value>) -> TaskResult<TaskTypes> {
         return match TaskTypes::from_str(key) {
             Ok(k) => Ok(k),
             Err(e) => {
-                let mut task_err = e;
+                let mut task_err = e.clone();
                 task_err.set_task(Some(task.clone()));
                 return Err(task_err);
             }
@@ -197,8 +160,8 @@ fn get_task_type(task: &HashMap<String, Value>) -> TaskResult<TaskTypes> {
     ))
 }
 
-fn validate_first_task(task_data: &TaskToExecute) -> TaskResult<()> {
-    let first_task = task_data.first();
+fn validate_first_task(task_data: &TaskData) -> TaskResult<()> {
+    let first_task = task_data.tasks.first();
     if let Some(first) = first_task {
         let key: Vec<&String> = first
             .keys()
@@ -223,8 +186,8 @@ fn validate_first_task(task_data: &TaskToExecute) -> TaskResult<()> {
     ))
 }
 
-fn is_last_task_close(task_data: &TaskToExecute) -> TaskResult<bool> {
-    let last_task = task_data.last();
+fn is_last_task_close(task_data: &TaskData) -> TaskResult<bool> {
+    let last_task = task_data.tasks.last();
     if let Some(last) = last_task {
         let key: Vec<&String> = last
             .keys()
@@ -442,8 +405,6 @@ tasks:
         ";
 
         let task: TaskData = serde_yaml::from_str(yaml).unwrap();
-        let task = task.tasks.unwrap();
-        
         let is_last = is_last_task_close(&task).unwrap();
         assert!(is_last);
     }
@@ -471,7 +432,6 @@ tasks:
                 ";
 
         let task: TaskData = serde_yaml::from_str(yaml).unwrap();
-        let task = task.tasks.unwrap();
         let is_last = is_last_task_close(&task).unwrap();
         assert!(!is_last);
     }
@@ -499,7 +459,6 @@ tasks:
                 ";
 
         let task: TaskData = serde_yaml::from_str(yaml).unwrap();
-        let task = task.tasks.unwrap();
         let is_valid = validate_first_task(&task);
         assert!(is_valid.is_ok())
     }
@@ -523,7 +482,6 @@ tasks:
                 ";
 
         let task: TaskData = serde_yaml::from_str(yaml).unwrap();
-        let task = task.tasks.unwrap();
         let result = validate_first_task(&task);
         let expected = Err(TaskErr::new(
             String::from("First Task should be a Link"),
