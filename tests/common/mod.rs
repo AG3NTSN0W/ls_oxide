@@ -16,7 +16,7 @@ pub async fn get_executor_ok(file_name: &str) -> Vec<TaskOk> {
     let mut path: PathBuf = resource_path_tmp();
     path.push(format!("{file_name}.yml"));
 
-    let executor = match Executor::new(path, None) {
+    let mut executor = match Executor::new(path, None) {
         Ok(executor) => executor,
         Err(err) => {
             cleanup(file_name);
