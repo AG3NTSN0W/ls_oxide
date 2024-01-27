@@ -1,10 +1,10 @@
-use crate::args::Args;
 use clap::Parser;
+use ls_oxide::cli_argument::Args;
 use ls_oxide::web_driver_session::{WebDriverConfig, WebDriverSession};
 use ls_oxide::{
-    executor::Executor, web_driver_process::WebDriverProcess, web_driver_session::Browser,
+    executor::Executor, web_driver_process::WebDriverProcess,
 };
-use std::error::Error;
+
 use std::path::PathBuf;
 use std::process;
 

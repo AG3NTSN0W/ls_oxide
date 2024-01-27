@@ -4,11 +4,11 @@ use thirtyfour::{Capabilities, ChromeCapabilities, DesiredCapabilities, WebDrive
 use std::{
     collections::HashMap,
     fs,
-    path::{self, PathBuf},
+    path::PathBuf,
     str::FromStr,
 };
 
-use crate::args::Args;
+use crate::cli_argument::Args;
 
 #[derive(Clone)]
 pub struct WebDriverSession {

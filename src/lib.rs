@@ -5,4 +5,4 @@ pub mod variables;
 pub mod structs;
 pub mod web_driver_session;
 pub mod web_driver_process;
-pub mod args;
+pub mod cli_argument;

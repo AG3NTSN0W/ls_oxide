@@ -16,7 +16,7 @@ pub struct Args {
     #[arg(short = 'c', long)]
     pub config_path: Option<PathBuf>,
 
-    /// browser: 'firefox' | 'chrome'
+    /// browser: 'firefox' or 'chrome' | default firefox
     #[arg(short = 'b', long)]
     pub browser: Option<Browser>,
 
@@ -24,6 +24,7 @@ pub struct Args {
     #[arg(short = 's', long)]
     pub server_url: Option<String>,
 
+    /// Path to chromedriver or geckodriver
     #[arg(short = 'w', long)]
     pub webdriver_path: Option<String>,
 
