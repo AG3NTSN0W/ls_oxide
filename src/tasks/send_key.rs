@@ -3,7 +3,10 @@ use serde_yaml::Value;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::task_ok::TaskOk, variables::resolve_variables, element::Element};
+use crate::{
+    element::Element, executor::ExecuteResult, structs::task_ok::TaskOk,
+    variables::resolve_variables, web_driver_session::WebDriverSession,
+};
 
 use super::{get_task, get_task_name, Task, TaskErr, TaskResult, TaskTypes};
 
@@ -43,7 +46,7 @@ impl Task for SendKey {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
         // println!(
         //     "Taske Type: {:#?}\nName: {:#?}\nelement Type: {:#?},\nValue: {}",
@@ -54,16 +57,13 @@ impl Task for SendKey {
         let element = match web_driver_session.driver.find(by).await {
             Ok(element) => element,
             Err(_) => {
-                return Err((
-                    web_driver_session,
-                    TaskErr::new(
-                        format!(
-                            "Unable to find element - Type: {:?}, Value: {}",
-                            self.element.element_type, self.element.value
-                        ),
-                        Some(TaskTypes::SENDKEY),
-                        None,
+                return Err(TaskErr::new(
+                    format!(
+                        "Unable to find element - Type: {:?}, Value: {}",
+                        self.element.element_type, self.element.value
                     ),
+                    Some(TaskTypes::SENDKEY),
+                    None,
                 ))
             }
         };
@@ -73,26 +73,20 @@ impl Task for SendKey {
         let name = self.name.clone();
 
         match send_key {
-            Ok(_) => Ok((
-                web_driver_session,
-                TaskOk {
-                    name,
-                    task_type: TaskTypes::SENDKEY,
-                    duration: start.elapsed().as_secs(),
-                    result: None,
-                },
-            )),
+            Ok(_) => Ok(TaskOk {
+                name,
+                task_type: TaskTypes::SENDKEY,
+                duration: start.elapsed().as_secs(),
+                result: None,
+            }),
             Err(_) => {
-                return Err((
-                    web_driver_session,
-                    TaskErr::new(
-                        format!(
-                            "Unable to send keys - Type: {:?}, Value: {}",
-                            self.element.element_type, self.element.value
-                        ),
-                        Some(TaskTypes::SENDKEY),
-                        None,
+                return Err(TaskErr::new(
+                    format!(
+                        "Unable to send keys - Type: {:?}, Value: {}",
+                        self.element.element_type, self.element.value
                     ),
+                    Some(TaskTypes::SENDKEY),
+                    None,
                 ))
             }
         }

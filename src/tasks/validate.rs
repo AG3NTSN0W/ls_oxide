@@ -5,11 +5,18 @@ use serde_yaml::{Mapping, Value};
 use std::time::Instant;
 use thirtyfour::WebElement;
 
-use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::{task_ok::TaskOk, validation_result::{ValidationResult, ValidationReultType}}, variables::resolve_variables, element::Element};
-
-use super::{
-    get_task, get_task_name, to_hash, Task, TaskErr, TaskResult, TaskTypes,
+use crate::{
+    element::Element,
+    executor::ExecuteResult,
+    structs::{
+        task_ok::TaskOk,
+        validation_result::{ValidationResult, ValidationReultType},
+    },
+    variables::resolve_variables,
+    web_driver_session::WebDriverSession,
 };
+
+use super::{get_task, get_task_name, to_hash, Task, TaskErr, TaskResult, TaskTypes};
 
 const TASK_TYPE: &str = "validate";
 #[derive(PartialEq, Eq, Debug)]
@@ -55,7 +62,7 @@ impl Task for Validate {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
 
         let web_element = match web_driver_session
@@ -65,9 +72,10 @@ impl Task for Validate {
         {
             Ok(element) => element,
             Err(e) => {
-                return Err((
-                    web_driver_session,
-                    TaskErr::new(format!("{}", e), Some(TaskTypes::VALIDATE), None),
+                return Err(TaskErr::new(
+                    format!("{}", e),
+                    Some(TaskTypes::VALIDATE),
+                    None,
                 ));
             }
         };
@@ -75,24 +83,16 @@ impl Task for Validate {
         let results =
             match validate(&self.expects, web_element, &web_driver_session.variables).await {
                 Ok(r) => r,
-                Err(e) => {
-                    return Err((
-                        web_driver_session,
-                        TaskErr::new(e, Some(TaskTypes::VALIDATE), None),
-                    ))
-                }
+                Err(e) => return Err(TaskErr::new(e, Some(TaskTypes::VALIDATE), None)),
             };
 
         let name = self.name.clone();
-        return Ok((
-            web_driver_session,
-            TaskOk {
-                name,
-                task_type: TaskTypes::VALIDATE,
-                duration: start.elapsed().as_secs(),
-                result: Some(results),
-            },
-        ));
+        return Ok(TaskOk {
+            name,
+            task_type: TaskTypes::VALIDATE,
+            duration: start.elapsed().as_secs(),
+            result: Some(results),
+        });
     }
 }
 

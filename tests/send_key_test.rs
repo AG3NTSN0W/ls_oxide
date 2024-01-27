@@ -6,6 +6,7 @@ mod send_key {
     use serial_test::serial;
 
     #[tokio::test]
+    #[serial]
     async fn test_invalid_task_data() {
         let data = "
         meta_data: {}
@@ -22,6 +23,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_missing_task_data() {
         let data = "
         meta_data: {}
@@ -37,6 +39,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_empty_name() {
         let data = "
         meta_data: {}
@@ -56,6 +59,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_invalid_name() {
         let data = "
         meta_data: {}
@@ -75,6 +79,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_invalid_element() {
         let data = "
         meta_data: {}
@@ -94,6 +99,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_invalid_element_value() {
         let data = "
         meta_data: {}
@@ -113,6 +119,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_invalid_input() {
         let data = "
         meta_data: {}
@@ -132,6 +139,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_missing_input() {
         let data = "
         meta_data: {}
@@ -150,6 +158,7 @@ mod send_key {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_missing_element() {
         let data = "
         meta_data: {}

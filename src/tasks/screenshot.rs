@@ -48,7 +48,7 @@ impl Task for Screenshot {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
 
         if let Some(element) = &self.element {
@@ -56,17 +56,16 @@ impl Task for Screenshot {
             let element = match web_driver_session.driver.find(by).await {
                 Ok(element) => element,
                 Err(e) => {
-                    return Err((
-                        web_driver_session,
+                    return Err(
                         TaskErr::new(format!("{}", e), Some(TaskTypes::SCREENSHOT), None),
-                    ));
+                    );
                 }
             };
 
             let path = resolve_variables(&self.path, &web_driver_session.variables);
 
             let screenshot = element.screenshot(Path::new(&path)).await;
-            return screenshot_result(screenshot, web_driver_session, &self.name, start);
+            return screenshot_result(screenshot, &self.name, start);
         }
 
         let screenshot = web_driver_session
@@ -74,34 +73,31 @@ impl Task for Screenshot {
             .screenshot(Path::new(&self.path))
             .await;
 
-        screenshot_result(screenshot, web_driver_session, &self.name, start)
+        screenshot_result(screenshot, &self.name, start)
     }
 }
 
 fn screenshot_result(
     screenshot: Result<(), WebDriverError>,
-    web_driver_session: WebDriverSession,
     name: &str,
     start: Instant,
 ) -> ExecuteResult {
     match screenshot {
-        Ok(_) => Ok((
-            web_driver_session,
+        Ok(_) => Ok(
             TaskOk {
                 name: name.to_string(),
                 task_type: TaskTypes::SCREENSHOT,
                 duration: start.elapsed().as_secs(),
                 result: None,
             },
-        )),
-        Err(e) => Err((
-            web_driver_session,
+        ),
+        Err(e) => Err(
             TaskErr::new(
                 format!("Unable to take a screenshot: {:?}", e),
                 Some(TaskTypes::SCREENSHOT),
                 None,
             ),
-        )),
+        ),
     }
 }
 

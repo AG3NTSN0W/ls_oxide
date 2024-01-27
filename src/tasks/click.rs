@@ -43,7 +43,7 @@ impl Task for Click {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
         // println!(
         //     "Taske Type: {:#?}\nName: {:#?}\nelement Type: {:#?},\nValue: {}",
@@ -55,10 +55,9 @@ impl Task for Click {
         let element = match web_driver_session.driver.find(by).await {
             Ok(element) => element,
             Err(e) => {
-                return Err((
-                    web_driver_session,
+                return Err(
                     TaskErr::new(format!("{}", e), Some(TaskTypes::CLICK), None),
-                ));
+                );
             }
         };
 
@@ -66,20 +65,18 @@ impl Task for Click {
         let name = self.name.clone();
 
         match click {
-            Ok(_) => Ok((
-                web_driver_session,
+            Ok(_) => Ok(
                 TaskOk {
                     name,
                     task_type: TaskTypes::CLICK,
                     duration: start.elapsed().as_secs(),
                     result: None,
                 },
-            )),
+            ),
             Err(e) => {
-                return Err((
-                    web_driver_session,
+                return Err(
                     TaskErr::new(format!("{}", e), Some(TaskTypes::CLICK), None),
-                ));
+                );
             }
         }
     }

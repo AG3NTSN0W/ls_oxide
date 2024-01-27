@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
+use crate::{
+    executor::ExecuteResult, structs::task_ok::TaskOk, web_driver_session::WebDriverSession,
+};
 use async_trait::async_trait;
 use serde_yaml::Value;
 use std::time::Instant;
-use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::task_ok::TaskOk};
 
 use super::{get_task_name, Task, TaskErr, TaskResult, TaskTypes};
 use tokio::time::{sleep, Duration};
@@ -30,21 +32,18 @@ impl Task for Wait {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, _: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
 
         sleep(self.duration_ms).await;
 
         let name = self.name.clone();
-        return Ok((
-            web_driver_session,
-            TaskOk {
-                name,
-                task_type: TaskTypes::WAIT,
-                duration: start.elapsed().as_secs(),
-                result: None,
-            },
-        ));
+        return Ok(TaskOk {
+            name,
+            task_type: TaskTypes::WAIT,
+            duration: start.elapsed().as_secs(),
+            result: None,
+        });
     }
 }
 

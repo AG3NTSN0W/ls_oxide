@@ -41,7 +41,7 @@ impl Task for SetVars {
         })
     }
 
-    async fn execute(&self, mut web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
 
         for (key, value) in self.variables.iter() {
@@ -49,15 +49,14 @@ impl Task for SetVars {
         }
 
         let name = self.name.clone();
-        return Ok((
-            web_driver_session,
+        return Ok(
             TaskOk {
                 name,
                 task_type: TaskTypes::SETVARIABLE,
                 duration: start.elapsed().as_secs(),
                 result: None,
             },
-        ));
+        );
     }
 }
 

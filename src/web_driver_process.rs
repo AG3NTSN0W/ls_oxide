@@ -3,7 +3,7 @@ use std::time::Duration;
 use std::{fmt, thread};
 
 // const PATH_TO_DRIVER: &str = "/usr/bin/geckodriver";
-const PATH_TO_DRIVER: &str = "/home/jacobusferreira/Downloads/geckodriver";
+// const PATH_TO_DRIVER: &str = "/home/jacobusferreira/Downloads/geckodriver";
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum WebDriverProcessError {
@@ -25,12 +25,12 @@ impl fmt::Display for WebDriverProcessError {
 }
 
 pub struct WebDriverProcess {
-    process: Option<std::process::Child>,
+    pub process: Option<std::process::Child>,
 }
 
 impl WebDriverProcess {
-    pub fn new() -> Result<Self, WebDriverProcessError> {
-        let process_thread = Command::new(PATH_TO_DRIVER)
+    pub fn new(path_to_diver: &str) -> Result<Self, WebDriverProcessError> {
+        let process_thread = Command::new(path_to_diver)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn();

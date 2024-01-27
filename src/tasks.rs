@@ -34,7 +34,7 @@ const NAME: &str = "name";
 
 #[async_trait]
 pub trait Task {
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult;
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult;
     fn new(task: &HashMap<String, Value>) -> TaskResult<Self>
     where
         Self: Sized;

@@ -31,7 +31,7 @@ impl Task for Close {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
         // println!(
         //     "Taske Type: {:#?}\nName: {:#?}",
@@ -43,25 +43,23 @@ impl Task for Close {
 
         match close {
             Ok(_) => {
-                return Ok((
-                    web_driver_session,
+                return Ok(
                     TaskOk {
                         name,
                         task_type: TaskTypes::CLOSE,
                         duration: start.elapsed().as_secs(),
                         result: None,
                     },
-                ));
+                );
             }
 
-            Err(e) => Err((
-                web_driver_session,
+            Err(e) => Err(
                 TaskErr::new(
                     format!("Unable to close webdriver: {}", e),
                     Some(TaskTypes::CLOSE),
                     None,
                 ),
-            )),
+            ),
         }
     }
 }

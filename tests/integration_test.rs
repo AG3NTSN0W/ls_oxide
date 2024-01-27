@@ -72,7 +72,7 @@ mod integration_test {
               element:
                 id: 'firstHeading' 
               expect:
-                text: 'Search results'      
+                text: 'Search'      
 
           - name: 'wait 1 sec'
             wait: 1000                    
@@ -134,7 +134,7 @@ mod integration_test {
         let task = result.get(10).unwrap();
         assert_eq!(task.name, "Validate 2nd page Title");
         assert_eq!(task.task_type, TaskTypes::VALIDATE);
-        common::validate_first_result(task, "Pass: Text is Search results");
+        common::validate_first_result(task, "Pass: Text is Search");
 
         let task = result.get(12).unwrap();
         assert_eq!(task.name, "closing web driver session");

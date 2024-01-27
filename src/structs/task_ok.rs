@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::tasks::{TaskTypes};
+use crate::tasks::TaskTypes;
 
 use super::validation_result::ValidationResult;
 

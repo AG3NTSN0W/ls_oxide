@@ -3,7 +3,10 @@ use serde_yaml::Value;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use crate::{executor::ExecuteResult, web_driver_session::WebDriverSession, structs::task_ok::TaskOk, variables::resolve_variables};
+use crate::{
+    executor::ExecuteResult, structs::task_ok::TaskOk, variables::resolve_variables,
+    web_driver_session::WebDriverSession,
+};
 
 use super::{get_task, get_task_name, Task, TaskErr, TaskResult, TaskTypes};
 
@@ -28,7 +31,7 @@ impl Task for Link {
         })
     }
 
-    async fn execute(&self, web_driver_session: WebDriverSession) -> ExecuteResult {
+    async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
         // println!(
         //     "Taske Type: {:#?}\nName: {:#?}\nUrl: {:#?}",
@@ -41,23 +44,17 @@ impl Task for Link {
         let name = self.name.clone();
 
         match link {
-            Ok(_) => Ok((
-                web_driver_session,
-                TaskOk {
-                    name,
-                    task_type: TaskTypes::LINK,
-                    duration: start.elapsed().as_secs(),
-                    result: None,
-                },
-            )),
+            Ok(_) => Ok(TaskOk {
+                name,
+                task_type: TaskTypes::LINK,
+                duration: start.elapsed().as_secs(),
+                result: None,
+            }),
             Err(_) => {
-                return Err((
-                    web_driver_session,
-                    TaskErr::new(
-                        "Unable to open link".to_string(),
-                        Some(TaskTypes::LINK),
-                        None,
-                    ),
+                return Err(TaskErr::new(
+                    "Unable to open link".to_string(),
+                    Some(TaskTypes::LINK),
+                    None,
                 ))
             }
         }

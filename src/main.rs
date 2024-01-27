@@ -1,48 +1,54 @@
+use crate::args::Args;
+use clap::Parser;
+use ls_oxide::web_driver_session::{WebDriverConfig, WebDriverSession};
+use ls_oxide::{
+    executor::Executor, web_driver_process::WebDriverProcess, web_driver_session::Browser,
+};
+use std::error::Error;
 use std::path::PathBuf;
 use std::process;
-use ls_oxide::executor::Executor;
-
-use clap::Parser;
-use std::error::Error;
-
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-#[command(name = "Little Sister")]
-#[command(version = "1.0")]
-#[command(about = "Automation Tool", long_about = None)]
-struct Args {
-    /// Path to task file
-    #[arg(short, long)]
-    task_path: PathBuf,
-
-    /// Path to config file
-    #[arg(short, long)]
-    config_path: Option<PathBuf>,
-
-    #[arg(short = 'v', value_parser = parse_key_val::<String, String>)]
-    vars: Option<Vec<(String, String)>>,
-}
-
-/// Parse a single key-value pair
-fn parse_key_val<T, U>(s: &str) -> Result<(T, U), Box<dyn Error + Send + Sync + 'static>>
-where
-    T: std::str::FromStr,
-    T::Err: Error + Send + Sync + 'static,
-    U: std::str::FromStr,
-    U::Err: Error + Send + Sync + 'static,
-{
-    let pos = s
-        .find('=')
-        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{s}`"))?;
-    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
-}
 
 #[tokio::main]
 async fn main() {
-    
-    let args = Args::parse();
+    let args: Args = Args::parse();
 
-    let mut executor = match Executor::new(args.task_path, args.config_path) {
+    let config: WebDriverConfig = WebDriverConfig::new(&args).unwrap_or_default();
+
+    if let Some(path_to_drive) = &config.webdriver_path {
+        let _web_driver_process = match WebDriverProcess::new(path_to_drive) {
+            Ok(process) => process,
+            Err(error) => {
+                println!("{}", error);
+                process::exit(1);
+            }
+        };
+
+        let web_driver_session: WebDriverSession = get_web_driver_session(config).await;
+
+        run(args.task_path, args.vars, web_driver_session).await;
+    } else {
+        let web_driver_session: WebDriverSession = get_web_driver_session(config).await;
+
+        run(args.task_path, args.vars, web_driver_session).await
+    }
+}
+
+async fn get_web_driver_session(config: WebDriverConfig) -> WebDriverSession {
+    match WebDriverSession::new(config).await {
+        Ok(web_driver_session) => web_driver_session,
+        Err(error) => {
+            println!("{}", error);
+            process::exit(1);
+        }
+    }
+}
+
+async fn run(
+    path: PathBuf,
+    vars: Option<Vec<(String, String)>>,
+    web_driver_session: WebDriverSession,
+) {
+    let mut executor = match Executor::validate_tasks(path) {
         Ok(exec) => exec,
         Err(e) => {
             println!("{}", e);
@@ -50,9 +56,8 @@ async fn main() {
         }
     };
 
-
-    match executor.execute(args.vars).await {
+    match executor.execute(vars, web_driver_session).await {
         Ok(x) => println!("{:#?}", x),
-        Err(x) => println!("{}", x)
+        Err(x) => println!("{}", x),
     };
 }
