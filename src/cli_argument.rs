@@ -10,7 +10,10 @@ use std::{error::Error, path::PathBuf};
 pub struct Args {
     /// Path to task file
     #[arg(short = 't', long)]
-    pub task_path: PathBuf,
+    pub task_path: Option<PathBuf>,
+
+    #[arg(short = 'd', long)]
+    pub task_suite: Option<PathBuf>,
 
     /// Path to config file
     #[arg(short = 'c', long)]
@@ -27,6 +30,10 @@ pub struct Args {
     /// Path to chromedriver or geckodriver
     #[arg(short = 'w', long)]
     pub webdriver_path: Option<String>,
+
+    /// Path to chromedriver or geckodriver
+    #[arg(short = 'p', long)]
+    pub port: Option<u32>,
 
     #[arg(short = 'v', long, value_parser = parse_key_val::<String, String>)]
     pub vars: Option<Vec<(String, String)>>,

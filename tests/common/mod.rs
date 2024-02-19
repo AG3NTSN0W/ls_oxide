@@ -16,7 +16,7 @@ pub async fn get_executor_ok(file_name: &str) -> Vec<TaskOk> {
     let mut path: PathBuf = resource_path_tmp();
     path.push(format!("{file_name}.yml"));
 
-    let mut executor = match Executor::validate_tasks(path) {
+    let mut executor = match Executor::validate_tasks(&path) {
         Ok(executor) => executor,
         Err(err) => {
             cleanup(file_name);
@@ -26,7 +26,7 @@ pub async fn get_executor_ok(file_name: &str) -> Vec<TaskOk> {
 
     let web_driver_session: WebDriverSession = WebDriverSession::new(WebDriverConfig::default()).await.unwrap();
 
-    let result = match executor.execute(None, web_driver_session).await {
+    let result = match executor.execute(&None, web_driver_session).await {
         Ok(result) => result,
         Err(err) => {
             cleanup(file_name);
@@ -42,7 +42,7 @@ pub fn get_executor_err(file_name: &str) -> TaskErr {
     let mut path: PathBuf = resource_path_tmp();
     path.push(format!("{file_name}.yml"));
 
-    match Executor::validate_tasks(path) {
+    match Executor::validate_tasks(&path) {
         Err(e) => e,
         Ok(_) => {
             cleanup(file_name);

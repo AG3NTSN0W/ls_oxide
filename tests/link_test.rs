@@ -22,7 +22,7 @@ mod link {
           - name: 'Validate Title'
             validate:
               element:
-                xPath: '//*[@id=\"www-wikipedia-org\"]/div[1]/h1/span' 
+                xPath: '//*[@id=\"www-wikipedia-org\"]/main/div[1]/h1/span' 
               expect:
                 text: 'Wikipedia'          
 

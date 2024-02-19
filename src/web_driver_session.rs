@@ -1,12 +1,7 @@
 use serde::{Deserialize, Serialize};
 use thirtyfour::{Capabilities, ChromeCapabilities, DesiredCapabilities, WebDriver};
 
-use std::{
-    collections::HashMap,
-    fs,
-    path::PathBuf,
-    str::FromStr,
-};
+use std::{collections::HashMap, fmt, fs, path::PathBuf, str::FromStr};
 
 use crate::cli_argument::Args;
 
@@ -18,12 +13,13 @@ pub struct WebDriverSession {
 
 impl WebDriverSession {
     pub async fn new(web_driver_config: WebDriverConfig) -> Result<WebDriverSession, String> {
-        let driver = match WebDriver::new(
+        let server_url = format!(
+            "{}:{}",
             &web_driver_config.server_url,
-            web_driver_config.capabilities,
-        )
-        .await
-        {
+            web_driver_config.get_port()
+        );
+
+        let driver = match WebDriver::new(&server_url, web_driver_config.capabilities).await {
             Ok(d) => d,
             Err(e) => return Err(e.to_string()),
         };
@@ -41,8 +37,8 @@ impl WebDriverSession {
 
 #[derive(Debug, Clone, Default, Copy, PartialEq, Eq)]
 pub enum Browser {
-    CHROME,
     #[default]
+    CHROME,
     FIREFOX,
 }
 
@@ -58,17 +54,28 @@ impl FromStr for Browser {
     }
 }
 
+impl fmt::Display for Browser {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Browser::CHROME => write!(f, "chrome"),
+            Browser::FIREFOX => write!(f, "firefox"),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 struct DriverConfig {
     browser: Option<String>,
     server_url: Option<String>,
+    port: Option<u32>,
     webdriver_path: Option<String>,
 }
 impl DriverConfig {
     fn default() -> DriverConfig {
         DriverConfig {
-            browser: Some(String::from("firefox")),
-            server_url: Some(String::from("http://localhost:4444")),
+            browser: Some(Browser::default().to_string()),
+            server_url: Some(String::from("http://localhost")),
+            port: Some(9515),
             webdriver_path: None,
         }
     }
@@ -78,14 +85,16 @@ impl DriverConfig {
 pub struct WebDriverConfig {
     capabilities: Capabilities,
     server_url: String,
+    port: u32,
     pub webdriver_path: Option<String>,
 }
 
 impl Default for WebDriverConfig {
     fn default() -> WebDriverConfig {
         WebDriverConfig {
-            capabilities: Capabilities::from(DesiredCapabilities::firefox()),
+            capabilities: Capabilities::from(DesiredCapabilities::chrome()),
             server_url: DriverConfig::default().server_url.unwrap(),
+            port: DriverConfig::default().port.unwrap(),
             webdriver_path: None,
         }
     }
@@ -97,19 +106,23 @@ impl WebDriverConfig {
             let capabilities = config.capabilities;
             let server_url = config.server_url;
             let webdriver_path = config.webdriver_path;
+            let port = config.port;
 
             return Ok(WebDriverConfig {
                 capabilities,
                 server_url,
+                port,
                 webdriver_path,
             });
         }
 
         let default = WebDriverConfig::default();
 
+        let default_browser = Browser::default();
+
         let browser = match &args.browser {
             Some(browser) => browser,
-            None => &Browser::FIREFOX,
+            None => &default_browser,
         };
 
         let capabilities = match browser {
@@ -122,9 +135,15 @@ impl WebDriverConfig {
             None => &default.server_url,
         };
 
+        let port = match args.port {
+            Some(port) => port,
+            None => WebDriverConfig::default().port,
+        };
+
         Ok(WebDriverConfig {
             capabilities,
             server_url: server_url.to_string(),
+            port,
             webdriver_path: args.webdriver_path.clone(),
         })
     }
@@ -154,23 +173,45 @@ impl WebDriverConfig {
                 Err(_) => DriverConfig::default(),
             };
 
-            let browser = Browser::from_str(&driver_config.browser.unwrap_or_default())?;
+            let browse_str = &driver_config
+                .browser
+                .unwrap_or(Browser::default().to_string());
+
+            let browser = Browser::from_str(browse_str).unwrap_or(Browser::default());
 
             let capabilities = match browser {
                 Browser::CHROME => Capabilities::from(Self::get_google_capabilities()),
                 Browser::FIREFOX => Capabilities::from(DesiredCapabilities::firefox()),
             };
 
-            let server_url = driver_config.server_url.unwrap_or_default();
-            let webdriver_path = driver_config.webdriver_path.unwrap_or_default();
+            let server_url = driver_config
+                .server_url
+                .unwrap_or(WebDriverConfig::default().server_url);
+
+            let port = driver_config
+                .port
+                .unwrap_or(WebDriverConfig::default().port);
+
+            let webdriver_path: String = driver_config.webdriver_path.unwrap_or_default();
+
+            let webdriver_path = if webdriver_path.is_empty() {
+                None
+            } else {
+                Some(webdriver_path)
+            };
 
             return Ok(WebDriverConfig {
                 capabilities,
                 server_url,
-                webdriver_path: Some(webdriver_path),
+                port,
+                webdriver_path: webdriver_path,
             });
         }
 
         Err("config path not provided".to_string())
+    }
+
+    pub fn get_port(&self) -> String {
+        self.port.to_string()
     }
 }

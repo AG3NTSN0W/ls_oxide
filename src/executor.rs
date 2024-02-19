@@ -13,7 +13,7 @@ pub struct Executor {
 }
 
 impl Executor {
-    pub fn validate_tasks(task_path: PathBuf) -> TaskResult<Self> {
+    pub fn validate_tasks(task_path: &PathBuf) -> TaskResult<Self> {
         let tasks_to_execute = to_task(task_path)?;
 
         Ok(Executor {
@@ -24,7 +24,7 @@ impl Executor {
 
     pub async fn execute(
         &mut self,
-        vars: Option<Vec<(String, String)>>,
+        vars: &Option<Vec<(String, String)>>,
         mut web_driver_session: WebDriverSession
     ) -> Result<&Vec<TaskOk>, String> {
         if let Some(vars) = vars {

@@ -6,6 +6,7 @@ mod send_key;
 mod set_variable;
 mod validate;
 mod wait;
+mod cookie;
 
 use crate::executor::ExecuteResult;
 use crate::structs::{task_data::TaskData, task_err::TaskErr};
@@ -18,6 +19,7 @@ use std::{fs, path::PathBuf};
 
 use self::click::Click;
 use self::close::Close;
+use self::cookie::Cookie;
 use self::link::Link;
 use self::screenshot::Screenshot;
 use self::send_key::SendKey;
@@ -27,7 +29,7 @@ use self::wait::Wait;
 use async_trait::async_trait;
 use core::fmt::Debug;
 
-pub type Tasks = Vec<Box<dyn Task>>;
+pub type Tasks = Vec<Box<dyn Task + Sync + Send>>;
 pub type TaskResult<T> = std::result::Result<T, TaskErr>;
 
 const NAME: &str = "name";
@@ -50,6 +52,7 @@ pub enum TaskTypes {
     SCREENSHOT,
     VALIDATE,
     SETVARIABLE,
+    COOKIE,
     #[default]
     NONE,
 }
@@ -67,6 +70,7 @@ impl FromStr for TaskTypes {
             "screenshot" => Ok(TaskTypes::SCREENSHOT),
             "validate" => Ok(TaskTypes::VALIDATE),
             "set_vars" => Ok(TaskTypes::SETVARIABLE),
+            "cookie" => Ok(TaskTypes::COOKIE),
             _ => Err(TaskErr::new(
                 format!("Unknow Task Type: {:#?}", input),
                 None,
@@ -77,8 +81,8 @@ impl FromStr for TaskTypes {
 }
 
 
-pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
-    let mut tasks: Vec<Box<dyn Task>> = vec![];
+pub fn to_task(path: &PathBuf) -> TaskResult<Tasks> {
+    let mut tasks: Vec<Box<dyn Task + Sync + Send>> = vec![];
     let task_data = get_task_data(path)?;
     for task_data in task_data.tasks.iter() {
         tasks.push(data_to_task(task_data)?);
@@ -96,9 +100,9 @@ pub fn to_task(path: PathBuf) -> TaskResult<Tasks> {
     Ok(tasks)
 }
 
-fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>> {
+fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task + Sync + Send>> {
     let task_type = get_task_type(task_data)?;
-    let task: Box<dyn Task> = match task_type {
+    let task: Box<dyn Task + Sync + Send> = match task_type {
         TaskTypes::SENDKEY => Box::new(<SendKey as Task>::new(task_data)?),
         TaskTypes::CLICK => Box::new(<Click as Task>::new(task_data)?),
         TaskTypes::CLOSE => Box::new(<Close as Task>::new(task_data)?),
@@ -107,6 +111,7 @@ fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>>
         TaskTypes::SCREENSHOT => Box::new(<Screenshot as Task>::new(task_data)?),
         TaskTypes::VALIDATE => Box::new(<Validate as Task>::new(task_data)?),
         TaskTypes::SETVARIABLE => Box::new(<SetVars as Task>::new(task_data)?),
+        TaskTypes::COOKIE => Box::new(<Cookie as Task>::new(task_data)?),
         _ => {
             return Err(TaskErr::new(
                 "Invalid Task Type".to_string(),
@@ -118,7 +123,7 @@ fn data_to_task(task_data: &HashMap<String, Value>) -> TaskResult<Box<dyn Task>>
     Ok(task)
 }
 
-fn get_task_data(path: PathBuf) -> TaskResult<TaskData> {
+fn get_task_data(path: &PathBuf) -> TaskResult<TaskData> {
     let yaml = match fs::read_to_string(path) {
         Ok(data) => data,
         Err(_) => {
@@ -132,7 +137,7 @@ fn get_task_data(path: PathBuf) -> TaskResult<TaskData> {
     match serde_yaml::from_str(&yaml) {
         Ok(data) => Ok(data),
         Err(_) => Err(TaskErr::new(
-            String::from("Unable to deserialize file"),
+            format!("Unable to deserialize task file: {}", path.display()),
             None,
             None,
         )),

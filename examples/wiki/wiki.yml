@@ -9,7 +9,7 @@ tasks:
     set_vars:
       input: "Rust"
       enterKey: "\uE007"
-      color: "rgb(0, 0, 0)"
+      color: "rgba(0, 0, 0, 1)"
     
   - name: "enter rust in search"
     send_key:
@@ -32,12 +32,13 @@ tasks:
       expect:
         css:
           color: "{color}"
-          display: 'inline-block'
+          display: 'inline'
           overflow: 'visible'
           'text-indent': '0px'
         text: "{input}"
         property:
           name: 'foo'  
+
 
   - name: "search and press enter key"
     send_key:
@@ -45,14 +46,16 @@ tasks:
       element:
         id: "searchInput"
 
+  - name: "wait 5 sec"
+    wait: 5000
+    
   - name: "Take a screenshot"
     screenshot: 
       path: "/tmp/screenshot.png"
       element:
-        xPath: '//*[@id="mw-content-text"]/div[1]/div[4]'
+        xPath: '//*[@id="mw-content-text"]/div[1]'
 
-  - name: "wait 5 sec"
-    wait: 5000
+
 
   - name: "closing web driver session"
     close: True

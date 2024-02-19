@@ -6,3 +6,4 @@ pub mod structs;
 pub mod web_driver_session;
 pub mod web_driver_process;
 pub mod cli_argument;
+pub mod thread_pool;

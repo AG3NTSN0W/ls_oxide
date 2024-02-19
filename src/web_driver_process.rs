@@ -2,9 +2,6 @@ use std::process::{Command, Stdio};
 use std::time::Duration;
 use std::{fmt, thread};
 
-// const PATH_TO_DRIVER: &str = "/usr/bin/geckodriver";
-// const PATH_TO_DRIVER: &str = "/home/jacobusferreira/Downloads/geckodriver";
-
 #[derive(PartialEq, Debug, Clone)]
 pub enum WebDriverProcessError {
     UnableToCreateProcess(String),
@@ -29,8 +26,10 @@ pub struct WebDriverProcess {
 }
 
 impl WebDriverProcess {
-    pub fn new(path_to_diver: &str) -> Result<Self, WebDriverProcessError> {
+    pub fn new(path_to_diver: &str, port: &str) -> Result<Self, WebDriverProcessError> {
+   
         let process_thread = Command::new(path_to_diver)
+            .arg(format!("--port={port}"))
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn();
@@ -41,7 +40,7 @@ impl WebDriverProcess {
                 return Err(WebDriverProcessError::UnableToCreateProcess(e.to_string()));
             }
         };
-
+    
         thread::sleep(Duration::from_millis(2000));
 
         Ok(WebDriverProcess {

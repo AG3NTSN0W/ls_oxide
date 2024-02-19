@@ -24,28 +24,28 @@ impl TaskErr {
         }
     }
 
-
     pub fn get_message(&self) -> &str {
         &self.message
     }
 
-    pub fn set_task(&mut self, task:Option<HashMap<String, Value>>) {
+    pub fn set_task(&mut self, task: Option<HashMap<String, Value>>) {
         self.task = task;
     }
-
- 
 }
 
 impl fmt::Display for TaskErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let task = self.task.clone().unwrap_or_default();
-
-        write!(
-            f,
-            "{:?}: {}\n{:#?}",
-            self.task_type.unwrap_or_default(),
-            self.message,
-            task
-        )
+        if self.task.is_some() && self.task_type.is_some() {
+            let task = self.task.clone().unwrap_or_default();
+            write!(
+                f,
+                "{:?}: {}\n{:#?}",
+                self.task_type.unwrap_or_default(),
+                self.message,
+                task
+            )
+        } else {
+            write!(f, "{}", self.message,)
+        }
     }
 }

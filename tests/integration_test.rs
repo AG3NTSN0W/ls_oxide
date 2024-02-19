@@ -56,15 +56,6 @@ mod integration_test {
                 id: 'searchInput'
 
           - name: 'wait 1 sec'
-            wait: 1000
-
-          - name: 'press enter key'
-            send_key:
-              input: '{enterKey}'
-              element:
-                id: 'searchInput'
-
-          - name: 'wait 1 sec'
             wait: 1000      
                    
           - name: 'Validate 2nd page Title'
@@ -72,7 +63,7 @@ mod integration_test {
               element:
                 id: 'firstHeading' 
               expect:
-                text: 'Search'      
+                text: 'Rust (programming language)'      
 
           - name: 'wait 1 sec'
             wait: 1000                    
@@ -83,7 +74,7 @@ mod integration_test {
 
         let result = executor_ok!(data);
 
-        assert_eq!(result.len(), 13);
+        assert_eq!(result.len(), 11);
 
         let task = result.get(0).unwrap();
         assert_eq!(task.name, "Open wikipedia");
@@ -127,16 +118,11 @@ mod integration_test {
         assert_eq!(task.duration, 1);
 
         let task = result.get(8).unwrap();
-        assert_eq!(task.name, "press enter key");
-        assert_eq!(task.task_type, TaskTypes::SENDKEY);
-        assert_eq!(task.result, None);
-
-        let task = result.get(10).unwrap();
         assert_eq!(task.name, "Validate 2nd page Title");
         assert_eq!(task.task_type, TaskTypes::VALIDATE);
-        common::validate_first_result(task, "Pass: Text is Search");
+        common::validate_first_result(task, "Pass: Text is Rust (programming language)");
 
-        let task = result.get(12).unwrap();
+        let task = result.get(10).unwrap();
         assert_eq!(task.name, "closing web driver session");
         assert_eq!(task.task_type, TaskTypes::CLOSE);
         assert_eq!(task.result, None);
