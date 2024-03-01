@@ -18,6 +18,23 @@ mod wait {
             wait: true
         ";
 
+        executor_err_message!(data, "Task data is Malformed");
+    }
+
+    #[tokio::test]
+    async fn test_wait_duration_not_number() {
+        let data = "
+        meta_data: {}
+        tasks:
+          - name: 'Open wikipedia'
+            link:
+              url: 'https://wikipedia.org'
+            
+          - name: 'wait 5 sec'
+            wait: 
+              duration_ms: true  
+        ";
+
         executor_err_message!(data, "Wait field is not a number");
     }
 
@@ -31,7 +48,8 @@ mod wait {
               url: 'https://wikipedia.org'
             
           - name: ''
-            wait: 5000
+            wait: 
+              duration_ms: 1000  
         ";
 
         executor_err_message!(data, "Task name can`t be empty");
@@ -47,7 +65,8 @@ mod wait {
               url: 'https://wikipedia.org'
             
           - name: 'wait 5 sec'
-            wait: 5000
+            wait: 
+              duration_ms: 5000  
         ";
 
         let result = executor_ok!(data);

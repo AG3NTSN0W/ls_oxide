@@ -1,14 +1,16 @@
-use std::{f64::consts::E, fmt, path::PathBuf};
+use std::{fmt, path::PathBuf};
 
 use super::validation_result::{ValidationResult, ValidationReultType};
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct TaskSuite<'a> {
     directory: String,
     path: &'a PathBuf,
     file_name: String,
     results: Option<TaskSuiteResult>,
     error: Option<String>,
+    duration: u64,
 }
 
 impl<'a> TaskSuite<'a> {
@@ -29,6 +31,7 @@ impl<'a> TaskSuite<'a> {
             file_name,
             results: None,
             error: None,
+            duration: 0
         }
     }
 
@@ -39,6 +42,10 @@ impl<'a> TaskSuite<'a> {
     pub fn set_error(&mut self, error: String) {
         self.error = Some(error);
     }
+
+    pub fn set_duration(&mut self, duration: u64) {
+        self.duration = duration;
+    }
 }
 
 impl<'a> fmt::Display for TaskSuite<'a> {
@@ -47,10 +54,11 @@ impl<'a> fmt::Display for TaskSuite<'a> {
             let r = self.results.clone().unwrap();
             write!(
                 f,
-                "Test results: {}, Success: {}, failed {}\n{}",
+                "Test results: {}, Success: {}, Failed: {}, Duration: {}\n{}",
                 self.path.display(),
                 r.success,
                 r.failed.0,
+                self.duration,
                 error_results_to_string(&r.failed.1)
             )
         } else if self.error.is_some() {
@@ -68,6 +76,7 @@ fn error_results_to_string(results: &Vec<ValidationResult>) -> String {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct TaskSuiteResult {
     success: usize,
     failed: (usize, Vec<ValidationResult>),

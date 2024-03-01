@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use serde_yaml::Value;
+use thirtyfour::extensions::query::ElementWaitable;
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -55,6 +56,20 @@ impl Task for SendKey {
         let by = Element::find_by_resolve(&self.element, &web_driver_session.variables);
 
         let element = match web_driver_session.driver.find(by).await {
+            Ok(element) => element,
+            Err(_) => {
+                return Err(TaskErr::new(
+                    format!(
+                        "Unable to find element - Type: {:?}, Value: {}",
+                        self.element.element_type, self.element.value
+                    ),
+                    Some(TaskTypes::SENDKEY),
+                    None,
+                ))
+            }
+        };
+
+        let _ = match element.wait_until().displayed().await {
             Ok(element) => element,
             Err(_) => {
                 return Err(TaskErr::new(

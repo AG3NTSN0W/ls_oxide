@@ -1,6 +1,6 @@
 use clap::Parser;
 use ls_oxide::cli_argument::Args;
-use ls_oxide::structs::task_ok::{self, TaskOk};
+use ls_oxide::structs::task_ok::TaskOk;
 use ls_oxide::structs::task_suite::TaskSuite;
 use ls_oxide::structs::validation_result::ValidationResult;
 use ls_oxide::thread_pool::ThreadPool;
@@ -12,6 +12,7 @@ use walkdir::WalkDir;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process;
+use std::time::Instant;
 
 async fn get_web_driver_session(config: WebDriverConfig) -> WebDriverSession {
     match WebDriverSession::new(config).await {
@@ -74,10 +75,11 @@ async fn main() {
 async fn run_dir(task_suite: &PathBuf) {
     let pool: ThreadPool = ThreadPool::new(2);
 
-    // if task_suite.is_file() {
-    //     println!("Task path can`t be a File: {:?}", task_suite);
-    //     process::exit(1);
-    // }
+    if task_suite.is_file() {
+        println!("Task path can`t be a File: {:?}", task_suite);
+        process::exit(1);
+    }
+    
     let walker = WalkDir::new(task_suite).into_iter();
 
     for entry in walker {
@@ -98,11 +100,10 @@ async fn run_dir(task_suite: &PathBuf) {
         {
             let taks_path = dir_entry.path().to_path_buf();
 
-      
-
             pool.execute(move || {
+                let start = Instant::now();
                 let rt = Runtime::new().unwrap();
-                let mut t_r = TaskSuite::new(&taks_path);
+                let mut task_result = TaskSuite::new(&taks_path);
                 match rt.block_on(async {
                     let args: Args = Args::parse();
                     let config: WebDriverConfig = WebDriverConfig::new(&args).unwrap_or_default();
@@ -117,12 +118,13 @@ async fn run_dir(task_suite: &PathBuf) {
                             .map(|x| x.unwrap())
                             .flat_map(|x| x)
                             .collect();
-                        
-                        t_r.add_results(results)
+
+                            task_result.add_results(results)
                     }
-                    Err(e) => t_r.set_error(e),
+                    Err(e) => task_result.set_error(e),
                 };
-                println!("{}", t_r.to_string())
+                task_result.set_duration(start.elapsed().as_secs());
+                println!("{}", task_result.to_string())
             });
         }
     }
@@ -136,5 +138,8 @@ async fn run_task(args: &Args, config: WebDriverConfig, task_path: &PathBuf) {
         process::exit(1);
     }
 
-    let _ = run(task_path, &args.vars, config).await;
+    match run(task_path, &args.vars, config).await {
+        Ok(x) => println!("{:#?}", x),
+        Err(e) => println!("{}", e),
+    };
 }

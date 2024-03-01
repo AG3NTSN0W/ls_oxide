@@ -56,7 +56,8 @@ mod integration_test {
                 id: 'searchInput'
 
           - name: 'wait 1 sec'
-            wait: 1000      
+            wait: 
+              duration_ms: 1000      
                    
           - name: 'Validate 2nd page Title'
             validate:
@@ -66,7 +67,8 @@ mod integration_test {
                 text: 'Rust (programming language)'      
 
           - name: 'wait 1 sec'
-            wait: 1000                    
+            wait: 
+              duration_ms: 1000                    
         
           - name: 'closing web driver session'
             close: True

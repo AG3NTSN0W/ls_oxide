@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_yaml::Value;
 use std::collections::HashMap;
 use std::time::Instant;
-use thirtyfour::By;
+use thirtyfour::{extensions::query::{ElementQueryable, ElementWaitable}, By};
 
 use super::{get_task, get_task_name, Task, TaskErr, TaskResult, TaskTypes};
 use crate::{
@@ -45,19 +45,30 @@ impl Task for Click {
 
     async fn execute(&self, web_driver_session: &mut WebDriverSession) -> ExecuteResult {
         let start = Instant::now();
-        // println!(
-        //     "Taske Type: {:#?}\nName: {:#?}\nelement Type: {:#?},\nValue: {}",
-        //     self._task_types, self.name, self.element.element_type, self.element.value
-        // );
 
         let by: By = Element::find_by_resolve(&self.element, &web_driver_session.variables);
 
-        let element = match web_driver_session.driver.find(by).await {
+        let find = web_driver_session.driver.query(by).first().await;
+        let element = match find {
             Ok(element) => element,
             Err(e) => {
                 return Err(
                     TaskErr::new(format!("{}", e), Some(TaskTypes::CLICK), None),
                 );
+            }
+        };
+
+        match element.wait_until().displayed().await {
+            Ok(element) => element,
+            Err(_) => {
+                return Err(TaskErr::new(
+                    format!(
+                        "Unable to find element - Type: {:?}, Value: {}",
+                        self.element.element_type, self.element.value
+                    ),
+                    Some(TaskTypes::SENDKEY),
+                    None,
+                ))
             }
         };
 

@@ -23,7 +23,8 @@ tasks:
         xPath: '//*[@id="search-form"]/fieldset/button'
 
   - name: "wait 5 sec"
-    wait: 5000
+    wait:
+      duration_ms: 5000
 
   - name: "Validate Title"
     validate:
@@ -47,7 +48,8 @@ tasks:
         id: "searchInput"
 
   - name: "wait 5 sec"
-    wait: 5000
+    wait:
+      duration_ms: 5000
     
   - name: "Take a screenshot"
     screenshot: 
